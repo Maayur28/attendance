@@ -1,112 +1,38 @@
 import Head from "next/head";
-import {
-  Button,
-  Divider,
-  Form,
-  Grid,
-  Segment,
-  Dimmer,
-  Loader,
-} from "semantic-ui-react";
+import DataTable from "react-data-table-component";
+import DatePicker from "react-datepicker";
 import styles from "../styles/Home.module.css";
 import "semantic-ui-css/semantic.min.css";
-import { useState, useEffect } from "react";
+import "react-datepicker/dist/react-datepicker.css";
+import { Popup, Button, Modal, Icon, Form } from "semantic-ui-react";
+import { useEffect, useState, useMemo, useCallback } from "react";
+import differenceBy from "lodash/differenceBy";
+import dateFormat from "dateformat";
 import { useRouter } from "next/router";
 
 export default function Home() {
   const router = useRouter();
-  const [signupOpen, setsignupOpen] = useState(false);
-  const [loginOpen, setloginOpen] = useState(false);
-  const [OrHorizontal, setOrHorizontal] = useState(false);
-  const [validSignupForm, setvalidSignupForm] = useState(true);
-  const [signupSuccess, setsignupSuccess] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [verifying, setverifying] = useState(false);
-  const [otp, setotp] = useState();
+  const [check, setcheck] = useState(false);
+  const [startDate, setStartDate] = useState(new Date());
+  const [isOpen, setIsOpen] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [selectedRows, setSelectedRows] = useState([]);
+  const [toggleCleared, setToggleCleared] = useState(false);
+  const [data, setData] = useState([]);
   const [name, setname] = useState("");
-  const [email, setemail] = useState("");
-  const [password, setpassword] = useState("");
+  const [salary, setsalary] = useState();
+  const [date, setdate] = useState("");
   const [nameError, setnameError] = useState(false);
-  const [emailError, setemailError] = useState(false);
-  const [passwordError, setpasswordError] = useState(false);
-  const [confpasswordError, setconfpasswordError] = useState(false);
-  const [confirmpassword, setconfirmpassword] = useState("");
-  const screenWidth = useWindowDimensions();
-  const passwordRegex = new RegExp(
-    "^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*_=+-]).{8,}$"
-  );
-  const emailRegex = new RegExp(
-    /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
-  );
+  const [addEmp, setAddEmp] = useState(true);
+  const pre = new Date();
   const nameRegex = new RegExp(/^[a-z]+[a-z ,.'-]+[a-z]+$/i);
-  function getWindowDimensions() {
-    if (typeof window != "undefined") {
-      const { innerWidth: width, innerHeight: height } = window;
-      return {
-        width,
-      };
-    }
-  }
-  function useWindowDimensions() {
-    const [windowDimensions, setWindowDimensions] = useState(
-      getWindowDimensions()
-    );
-
-    useEffect(() => {
-      setsignupSuccess(localStorage.getItem('x-auth-token')!=undefined?true:false);
-      function handleResize() {
-        setWindowDimensions(getWindowDimensions());
-      }
-      window.addEventListener("resize", handleResize);
-      return () => window.removeEventListener("resize", handleResize);
-    }, []);
-
-    return windowDimensions;
-  }
   useEffect(() => {
-    if (screenWidth.width <= 767) {
-      setOrHorizontal(true);
-    }
-    if (screenWidth.width > 767) {
-      setOrHorizontal(false);
-    }
-  }, [screenWidth]);
-  useEffect(() => {
-    if (
-      name != "" &&
-      email != "" &&
-      password != "" &&
-      confirmpassword != "" &&
-      !nameError &&
-      !emailError &&
-      !passwordError &&
-      !confpasswordError
-    )
-      setvalidSignupForm(false);
-    else setvalidSignupForm(true);
-  }, [name, email, password, confirmpassword]);
-  const handleLogin = () => {
-    setloginOpen(true);
-    setsignupOpen(false);
-  };
-  const handleSignup = () => {
-    setloginOpen(false);
-    setsignupOpen(true);
-  };
-  const handleLoginRequest = () => {
-    setloginOpen(true);
-    setsignupOpen(false);
-  };
-  const handleSignupRequest = () => {
-    if (!validSignupForm) {
-      setSubmitting(true);
-      setvalidSignupForm(true);
+    if (localStorage.getItem("accessToken") == undefined)
+      router.replace("/login");
+    else {
       let obj = {};
-      obj.name = name;
-      obj.email = email;
-      obj.password = password;
-      obj.confirmPassword = confirmpassword;
-      fetch("http://localhost:1111/register", {
+      obj.accessToken = localStorage.getItem("accessToken");
+      fetch("http://localhost:1111/verifyaccess", {
         method: "POST",
         body: JSON.stringify(obj),
         headers: {
@@ -123,47 +49,150 @@ export default function Home() {
           }
         })
         .then((datarec) => {
-          localStorage.setItem("x-auth-token", datarec.refreshToken);
-          if (datarec.refreshToken) setsignupSuccess(true);
-          // setname("");
-          // setemail("");
-          // setpassword("");
-          // setconfirmpassword("");
-          setSubmitting(false);
+          if (datarec.accessToken) {
+            localStorage.setItem("accessToken", datarec.accessToken);
+            fetch("http://localhost:2222/getAttendance", {
+              headers: {
+                userid: datarec.userid,
+              },
+            })
+              .then((response) => {
+                if (response.status >= 200 && response.status <= 299) {
+                  return response.json();
+                } else {
+                  return response.text().then((text) => {
+                    throw new Error(text);
+                  });
+                }
+              })
+              .then((val) => {
+                setData(val.data);
+              })
+              .catch((err) => {
+                console.log(err.message);
+              });
+          } else {
+            localStorage.removeItem("accessToken");
+            router.replace("/login");
+          }
         })
         .catch((err) => {
           console.log(err.message);
-          setsignupSuccess(false);
-          setSubmitting(false);
-          setvalidSignupForm(false);
+          if (
+            err.message.includes("jwt expired") ||
+            err.message.includes("jwt malformed")
+          ) {
+            localStorage.removeItem("accessToken");
+            router.replace("/login");
+          }
+          // localStorage.removeItem('accessToken');
+          // router.replace("/login");
         });
     }
+  }, []);
+  const handleRowSelected = useCallback((state) => {
+    setSelectedRows(state.selectedRows);
+  }, []);
+  const contextActions = () => {
+    const handleDelete = () => {
+      if (
+        window.confirm(
+          `Are you sure you want to delete:\r ${selectedRows.map(
+            (r) => r.name
+          )}?`
+        )
+      ) {
+        setToggleCleared(!toggleCleared);
+        setData(differenceBy(data, selectedRows, "name"));
+      }
+    };
+    return (
+      <Button
+        key="delete"
+        onClick={handleDelete}
+        style={{ backgroundColor: "red" }}
+        icon
+      >
+        Delete
+      </Button>
+    );
+  }
+  useEffect(() => {
+    if(name!='' && salary>0 && date!='' && !nameError)
+      setAddEmp(false);
+      else
+      setAddEmp(true);
+  }, [name,salary,date])
+  const handleChange = (e) => {
+    setIsOpen(!isOpen);
+    setStartDate(e);
   };
-  const handlePassword = (e) => {
-    setpasswordError(!passwordRegex.test(e.target.value));
-    if (confirmpassword)
-      setconfpasswordError(e.target.value != confirmpassword ? true : false);
-    setpassword(e.target.value);
-  };
-  const handleEmail = (e) => {
-    setemailError(!emailRegex.test(e.target.value));
-    setemail(e.target.value);
+  const handleClick = (e) => {
+    e.preventDefault();
+    setIsOpen(!isOpen);
   };
   const handleName = (e) => {
     setnameError(!nameRegex.test(e.target.value));
     setname(e.target.value);
   };
-  const handleconfPassword = (e) => {
-    setconfpasswordError(password != e.target.value ? true : false);
-    setconfirmpassword(e.target.value);
-  };
-  const handleVerifyOtpRequest = () => {
-    if (otp.toString().length > 5) {
-      let obj = {};
-      setverifying(true);
-      obj.otp = otp;
-      obj.sessionId = localStorage.getItem("x-auth-token");
-      fetch("http://localhost:1111/verifyotp", {
+  const columns = [
+    {
+      name: "Name",
+      selector: (row) => row.name,
+      sortable: true,
+    },
+    {
+      name: "Action",
+      button: true,
+      width: "150px",
+      cell: () => (
+        <div className="ui small buttons">
+          <button
+            className={`ui positive button ${check ? "" : "basic"}`}
+            onClick={() => setcheck((prev) => !prev)}
+          >
+            P
+          </button>
+          <div className="or"></div>
+          <button className="ui negative button">A</button>
+        </div>
+      ),
+    },
+    {
+      name: "Advance",
+      button: true,
+      width: "150px",
+      cell: () => (
+        <div className={`ui labeled input ${styles.advance}`}>
+          <div className="ui basic label">₹</div>
+          <input type="number" placeholder="Amount" />
+        </div>
+      ),
+    },
+    {
+      name: "Remark",
+      button: true,
+      width: "250px",
+      cell: () => (
+        <form className="ui form">
+          <textarea
+            placeholder="Remarks..."
+            rows="1"
+            className={styles.remarks}
+          ></textarea>
+        </form>
+      ),
+    },
+  ];
+  const handleEmpSubmit=()=>{
+    if(name!='' && salary>0 && date!='' && !nameError)
+    {
+      if (localStorage.getItem("accessToken") == undefined)
+          router.replace("/login");
+      else {
+        let obj = {};
+        obj.accessToken = localStorage.getItem("accessToken");
+        fetch("http://localhost:1111/verifyaccess", {
         method: "POST",
         body: JSON.stringify(obj),
         headers: {
@@ -180,171 +209,173 @@ export default function Home() {
           }
         })
         .then((datarec) => {
-          if (datarec.sessonId) {
-            localStorage.removeItem("x-auth-token");
-            localStorage.setItem("sessionId", datarec.sessonId);
+          if (datarec.accessToken) {
+            localStorage.setItem("accessToken", datarec.accessToken);
+            let obj={
+              userid:datarec.userid,
+              data:{
+              name:name,
+              salary:salary,
+            attendance:{
+              date:date,
+              present:false,
+              absent:false,
+              advance:0,
+              remarks:''
+            }
+            }
           }
-          setverifying(false);
-          router.replace("attendance");
+            fetch("http://localhost:2222/addemp", {
+              method: "POST",
+              body: JSON.stringify(obj),
+              headers: {
+                  "Content-type": "application/json; charset=UTF-8",
+              },
+            })
+              .then((response) => {
+                if (response.status >= 200 && response.status <= 299) {
+                  return response.json();
+                } else {
+                  return response.text().then((text) => {
+                    throw new Error(text);
+                  });
+                }
+              })
+              .then((val) => {
+                setData(val.data);
+              })
+              .catch((err) => {
+                console.log(err.message);
+              });
+          } else {
+            localStorage.removeItem("accessToken");
+            router.replace("/login");
+          }
         })
         .catch((err) => {
-          localStorage.removeItem('x-auth-token');
-          setsignupSuccess(false);
           console.log(err.message);
-          setverifying(false);
+          if (
+            err.message.includes("jwt expired") ||
+            err.message.includes("jwt malformed")
+          ) {
+            localStorage.removeItem("accessToken");
+            router.replace("/login");
+          }
+          // localStorage.removeItem('accessToken');
+          // router.replace("/login");
         });
     }
+    }
+  }
+  const ExpandedComponent = ({ data }) => {
+    return <pre>{JSON.stringify(data, null, 2)}</pre>;
   };
   return (
-    <div>
-      <Head>
-        <title>Create Next App</title>
-        <meta name="description" content="Generated by create next app" />
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
+    <>
+      <div className={styles.container}>
+        <Head>
+          <title>Create Next App</title>
+          <meta name="description" content="Generated by create next app" />
+          <link rel="icon" href="/favicon.ico" />
+        </Head>
+        <main className={styles.main}>
+          <h1 className={styles.heading}>Attendance Management System</h1>
+          <div>
+            <Button
+              content={dateFormat(startDate, "dddd, mmmm dS, yyyy")}
+              secondary
+              onClick={handleClick}
+            />
+            {isOpen && (
+              <DatePicker
+                todayButton="Today"
+                selected={startDate}
+                onChange={handleChange}
+                inline
+              />
+            )}
+          </div>
+          <DataTable
+            title={
+              <Popup
+                content="Add an employee"
+                trigger={
+                  <i
+                    className={`user plus icon ${styles.addUser}`}
+                    onClick={() => setOpen((prev) => !prev)}
+                  ></i>
+                }
+              />
+            }
+            columns={columns}
+            data={data}
+            highlightDates={[pre]}
+            // highlightOnHover
+            // pointerOnHover
+            pagination
+            selectableRows
+            expandableRows
+            expandableRowsComponent={ExpandedComponent}
+            contextActions={contextActions}
+            onSelectedRowsChange={handleRowSelected}
+            clearSelectedRows={toggleCleared}
+          />
+        </main>
+      </div>
       {
-        <Segment placeholder className={styles.loginPage}>
-          <Grid columns={2} relaxed="very" stackable>
-            <Grid.Column verticalAlign="middle">
-              {loginOpen ? (
-                <Form>
-                  <Form.Input
-                    icon="mail"
-                    iconPosition="left"
-                    label="Email"
-                    placeholder="Ex: abc@gmail.com"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setemail(e.target.value)}
-                  />
-                  <Form.Input
-                    icon="lock"
-                    iconPosition="left"
-                    label="Password"
-                    type="password"
-                    placeholder="Ex: P@ssword_0123"
-                    value={password}
-                    onChange={(e) => setpassword(e.target.value)}
-                  />
-                  <Button
-                    content="Login"
-                    color="black"
-                    onClick={handleLoginRequest}
-                  />
-                </Form>
-              ) : (
-                <Button
-                  content="Login"
-                  icon="sign-in"
-                  size="big"
-                  onClick={handleLogin}
+        <Modal
+          size="mini"
+          open={open}
+          onClose={() => setOpen(false)}
+          onOpen={() => setOpen(true)}
+        >
+          <Modal.Header>Employee Details</Modal.Header>
+          <Modal.Content scrolling>
+            <Form>
+              <Form.Input
+                required
+                error={nameError && "Avoid using numbers and specials characters except(,.'-)"}
+                fluid
+                label="Name"
+                placeholder="Name"
+                id="form-input-name"
+                value={name}
+                onChange={handleName}
+              />
+              <Form.Group>
+                <Form.Input
+                  required
+                  fluid
+                  width={6}
+                  label="Salary"
+                  placeholder="Salary/day"
+                  type="number"
+                  min="1"
+                  value={salary}
+                  onChange={(e)=>setsalary(e.target.value)}
                 />
-              )}
-            </Grid.Column>
-            <Grid.Column verticalAlign="middle">
-              {signupOpen ? (
-                <>
-                  {signupSuccess ? (
-                    <Form onSubmit={handleVerifyOtpRequest}>
-                      <Form.Input
-                        icon="key"
-                        iconPosition="left"
-                        placeholder="Enter your otp"
-                        type="number"
-                        value={otp}
-                        onChange={(e) => setotp(e.target.value)}
-                      />
-                      <Button
-                        loading={verifying}
-                        content="Verify"
-                        color="black"
-                        disabled={
-                          otp
-                            ? otp.toString().length < 5
-                              ? true
-                              : false
-                            : true
-                        }
-                      />
-                    </Form>
-                  ) : (
-                    <Form onSubmit={handleSignupRequest}>
-                      <Form.Input
-                        required
-                        icon="user"
-                        iconPosition="left"
-                        label="Name"
-                        error={
-                          nameError &&
-                          "Avoid using numbers and specials characters except(,.'-)"
-                        }
-                        placeholder="Ex: Mayur Agarwal"
-                        type="text"
-                        value={name}
-                        onChange={handleName}
-                      />
-                      <Form.Input
-                        required
-                        icon="mail"
-                        iconPosition="left"
-                        label="Email"
-                        error={
-                          emailError &&
-                          "Please provide correct email(Ex: abc@gmail.com)"
-                        }
-                        placeholder="Ex: abc@gmail.com"
-                        type="email"
-                        value={email}
-                        onChange={handleEmail}
-                        id="name"
-                      />
-                      <Form.Input
-                        required
-                        icon="lock"
-                        iconPosition="left"
-                        error={
-                          passwordError &&
-                          "Password must contain at least 1 Uppercase, 1 Lowercase, 1 Number, 1 Symbol(!@#$%^&*_=+-) and min 8 length."
-                        }
-                        label="Password"
-                        type="password"
-                        placeholder="Ex: P@ssword_0123"
-                        value={password}
-                        onChange={handlePassword}
-                      />
-                      <Form.Input
-                        required
-                        icon="lock"
-                        iconPosition="left"
-                        label="Confirm Password"
-                        error={confpasswordError && "Password does not match"}
-                        type="password"
-                        placeholder="Ex: P@ssword_0123"
-                        value={confirmpassword}
-                        onChange={handleconfPassword}
-                      />
-                      <Button
-                        loading={submitting}
-                        content="Signup"
-                        color="black"
-                        disabled={validSignupForm}
-                      />
-                    </Form>
-                  )}
-                </>
-              ) : (
-                <Button
-                  content="Sign up"
-                  icon="signup"
-                  size="big"
-                  onClick={handleSignup}
+                <Form.Input
+                  required
+                  width={10}
+                  fluid
+                  label="Start Date"
+                  type="date"
+                  value={date}
+                  onChange={(e)=>setdate(e.target.value)}
                 />
-              )}
-            </Grid.Column>
-          </Grid>
-          <Divider vertical>Or</Divider>
-        </Segment>
+              </Form.Group>
+            </Form>
+          </Modal.Content>
+          <Modal.Actions>
+            <Button color="red" onClick={() => setOpen(false)}>
+              <Icon name="remove" /> Cancel
+            </Button>
+            <Button color="green" onClick={() => setOpen(false)} disabled={addEmp} onClick={handleEmpSubmit}>
+              <Icon name="checkmark" /> Add
+            </Button>
+          </Modal.Actions>
+        </Modal>
       }
-    </div>
+    </>
   );
 }
