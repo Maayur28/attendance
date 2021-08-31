@@ -1,30 +1,34 @@
 import Head from "next/head";
-import DataTable from "react-data-table-component";
 import DatePicker from "react-datepicker";
 import styles from "../styles/Home.module.css";
 import "semantic-ui-css/semantic.min.css";
 import "react-datepicker/dist/react-datepicker.css";
-import { Popup, Button, Modal, Icon, Form } from "semantic-ui-react";
-import { useEffect, useState, useMemo, useCallback } from "react";
-import differenceBy from "lodash/differenceBy";
+import {
+  Popup,
+  Button,
+  Modal,
+  Icon,
+  Form,
+  Label,
+  Table,
+  Menu,
+} from "semantic-ui-react";
+import { useEffect, useState } from "react";
 import dateFormat from "dateformat";
 import { useRouter } from "next/router";
 
 export default function Home() {
   const router = useRouter();
-  const [check, setcheck] = useState(false);
+  // const [dummy, setdummy]=useState([]);
   const [startDate, setStartDate] = useState(new Date());
   const [isOpen, setIsOpen] = useState(false);
   const [open, setOpen] = useState(false);
-  const [selectedRows, setSelectedRows] = useState([]);
-  const [toggleCleared, setToggleCleared] = useState(false);
   const [data, setData] = useState([]);
   const [name, setname] = useState("");
   const [salary, setsalary] = useState();
   const [date, setdate] = useState("");
   const [nameError, setnameError] = useState(false);
   const [addEmp, setAddEmp] = useState(true);
-  const pre = new Date();
   const nameRegex = new RegExp(/^[a-z]+[a-z ,.'-]+[a-z]+$/i);
   useEffect(() => {
     if (localStorage.getItem("accessToken") == undefined)
@@ -85,44 +89,13 @@ export default function Home() {
             localStorage.removeItem("accessToken");
             router.replace("/login");
           }
-          // localStorage.removeItem('accessToken');
-          // router.replace("/login");
         });
     }
   }, []);
-  const handleRowSelected = useCallback((state) => {
-    setSelectedRows(state.selectedRows);
-  }, []);
-  const contextActions = () => {
-    const handleDelete = () => {
-      if (
-        window.confirm(
-          `Are you sure you want to delete:\r ${selectedRows.map(
-            (r) => r.name
-          )}?`
-        )
-      ) {
-        setToggleCleared(!toggleCleared);
-        setData(differenceBy(data, selectedRows, "name"));
-      }
-    };
-    return (
-      <Button
-        key="delete"
-        onClick={handleDelete}
-        style={{ backgroundColor: "red" }}
-        icon
-      >
-        Delete
-      </Button>
-    );
-  }
   useEffect(() => {
-    if(name!='' && salary>0 && date!='' && !nameError)
-      setAddEmp(false);
-      else
-      setAddEmp(true);
-  }, [name,salary,date])
+    if (name != "" && salary > 0 && date != "" && !nameError) setAddEmp(false);
+    else setAddEmp(true);
+  }, [name, salary, date]);
   const handleChange = (e) => {
     setIsOpen(!isOpen);
     setStartDate(e);
@@ -135,140 +108,156 @@ export default function Home() {
     setnameError(!nameRegex.test(e.target.value));
     setname(e.target.value);
   };
-  const columns = [
-    {
-      name: "Name",
-      selector: (row) => row.name,
-      sortable: true,
-    },
-    {
-      name: "Action",
-      button: true,
-      width: "150px",
-      cell: () => (
-        <div className="ui small buttons">
-          <button
-            className={`ui positive button ${check ? "" : "basic"}`}
-            onClick={() => setcheck((prev) => !prev)}
-          >
-            P
-          </button>
-          <div className="or"></div>
-          <button className="ui negative button">A</button>
-        </div>
-      ),
-    },
-    {
-      name: "Advance",
-      button: true,
-      width: "150px",
-      cell: () => (
-        <div className={`ui labeled input ${styles.advance}`}>
-          <div className="ui basic label">₹</div>
-          <input type="number" placeholder="Amount" />
-        </div>
-      ),
-    },
-    {
-      name: "Remark",
-      button: true,
-      width: "250px",
-      cell: () => (
-        <form className="ui form">
-          <textarea
-            placeholder="Remarks..."
-            rows="1"
-            className={styles.remarks}
-          ></textarea>
-        </form>
-      ),
-    },
-  ];
-  const handleEmpSubmit=()=>{
-    if(name!='' && salary>0 && date!='' && !nameError)
-    {
+  const handleEmpSubmit = () => {
+    if (name != "" && salary > 0 && date != "" && !nameError) {
       if (localStorage.getItem("accessToken") == undefined)
-          router.replace("/login");
+        router.replace("/login");
       else {
         let obj = {};
         obj.accessToken = localStorage.getItem("accessToken");
         fetch("http://localhost:1111/verifyaccess", {
-        method: "POST",
-        body: JSON.stringify(obj),
-        headers: {
-          "Content-type": "application/json; charset=UTF-8",
-        },
-      })
-        .then((response) => {
-          if (response.status >= 200 && response.status <= 299) {
-            return response.json();
-          } else {
-            return response.text().then((text) => {
-              throw new Error(text);
-            });
-          }
+          method: "POST",
+          body: JSON.stringify(obj),
+          headers: {
+            "Content-type": "application/json; charset=UTF-8",
+          },
         })
-        .then((datarec) => {
-          if (datarec.accessToken) {
-            localStorage.setItem("accessToken", datarec.accessToken);
-            let obj={
-              userid:datarec.userid,
-              data:{
-              name:name,
-              salary:salary,
-            attendance:{
-              date:date,
-              present:false,
-              absent:false,
-              advance:0,
-              remarks:''
-            }
-            }
-          }
-            fetch("http://localhost:2222/addemp", {
-              method: "POST",
-              body: JSON.stringify(obj),
-              headers: {
-                  "Content-type": "application/json; charset=UTF-8",
-              },
-            })
-              .then((response) => {
-                if (response.status >= 200 && response.status <= 299) {
-                  return response.json();
-                } else {
-                  return response.text().then((text) => {
-                    throw new Error(text);
-                  });
-                }
-              })
-              .then((val) => {
-                setData(val.data);
-              })
-              .catch((err) => {
-                console.log(err.message);
+          .then((response) => {
+            if (response.status >= 200 && response.status <= 299) {
+              return response.json();
+            } else {
+              return response.text().then((text) => {
+                throw new Error(text);
               });
-          } else {
-            localStorage.removeItem("accessToken");
-            router.replace("/login");
-          }
-        })
-        .catch((err) => {
-          console.log(err.message);
-          if (
-            err.message.includes("jwt expired") ||
-            err.message.includes("jwt malformed")
-          ) {
-            localStorage.removeItem("accessToken");
-            router.replace("/login");
-          }
-          // localStorage.removeItem('accessToken');
-          // router.replace("/login");
-        });
+            }
+          })
+          .then((datarec) => {
+            if (datarec.accessToken) {
+              localStorage.setItem("accessToken", datarec.accessToken);
+              let obj = {
+                userid: datarec.userid,
+                data: {
+                  name: name.replace(/\w\S*/g, function (txt) {
+                    return (
+                      txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()
+                    );
+                  }),
+                  salary: salary,
+                  attendance: {},
+                },
+              };
+              fetch("http://localhost:2222/addemp", {
+                method: "POST",
+                body: JSON.stringify(obj),
+                headers: {
+                  "Content-type": "application/json; charset=UTF-8",
+                },
+              })
+                .then((response) => {
+                  if (response.status >= 200 && response.status <= 299) {
+                    return response.json();
+                  } else {
+                    return response.text().then((text) => {
+                      throw new Error(text);
+                    });
+                  }
+                })
+                .then((val) => {
+                  setData(val.data);
+                  setOpen(false);
+                  setname("");
+                  setsalary();
+                  setdate("");
+                })
+                .catch((err) => {
+                  console.log(err.message);
+                });
+            } else {
+              localStorage.removeItem("accessToken");
+              router.replace("/login");
+            }
+          })
+          .catch((err) => {
+            console.log(err.message);
+            if (
+              err.message.includes("jwt expired") ||
+              err.message.includes("jwt malformed")
+            ) {
+              localStorage.removeItem("accessToken");
+              router.replace("/login");
+            }
+          });
+      }
     }
-    }
-  }
+  };
+  const handleAction = (key, val, id) => {
+    data.forEach((value) => {
+      if (value.id == id) {
+        if (value.attendance.length)
+          value.attendance.forEach((valu) => {
+            if (valu.date == startDate.toISOString().slice(0, 10)) {
+              valu[key] = val;
+            }
+          });
+        else
+          value.attendance.push({
+            date: startDate.toISOString().slice(0, 10),
+            [key]: val,
+          });
+        setData([...data]);
+      }
+    });
+  };
   const ExpandedComponent = ({ data }) => {
-    return <pre>{JSON.stringify(data, null, 2)}</pre>;
+    return (
+      <div className={styles.exapnded}>
+        <Button as="div" labelPosition="right" className={styles.expandLabel}>
+          <Button color="black">
+            <Icon name="money" />
+            Amount to be paid(Total Amount-Advance)-
+          </Button>
+          <Label basic color="black" pointing="left">
+            2,048
+          </Label>
+        </Button>
+        <Button as="div" labelPosition="right" className={styles.expandLabel}>
+          <Button color="orange">
+            <Icon name="money" />
+            Total
+          </Button>
+          <Label basic color="orange" pointing="left">
+            2,048
+          </Label>
+        </Button>
+        <Button as="div" labelPosition="right" className={styles.expandLabel}>
+          <Button color="grey">
+            <Icon name="bell" />
+            Advance-
+          </Button>
+          <Label basic color="grey" pointing="left">
+            2,048
+          </Label>
+        </Button>
+        <Button as="div" labelPosition="right" className={styles.expandLabel}>
+          <Button color="green">
+            <Icon name="check" />
+            Present-
+          </Button>
+          <Label basic color="green" pointing="left">
+            2,048
+          </Label>
+        </Button>
+        <Button as="div" labelPosition="right" className={styles.expandLabel}>
+          <Button color="red">
+            <Icon name="close" />
+            Absent-
+          </Button>
+          <Label basic color="red" pointing="left">
+            2,048
+          </Label>
+        </Button>
+      </div>
+    );
   };
   return (
     <>
@@ -279,12 +268,21 @@ export default function Home() {
           <link rel="icon" href="/favicon.ico" />
         </Head>
         <main className={styles.main}>
-          <h1 className={styles.heading}>Attendance Management System</h1>
-          <div>
+          {/* <h1 className={styles.heading}>Attendance Management System</h1> */}
+          <div className={styles.calendar}>
             <Button
               content={dateFormat(startDate, "dddd, mmmm dS, yyyy")}
               secondary
               onClick={handleClick}
+            />
+            <Popup
+              content="Add an employee"
+              trigger={
+                <i
+                  className={`user plus icon ${styles.addUser}`}
+                  onClick={() => setOpen((prev) => !prev)}
+                ></i>
+              }
             />
             {isOpen && (
               <DatePicker
@@ -295,31 +293,135 @@ export default function Home() {
               />
             )}
           </div>
-          <DataTable
-            title={
-              <Popup
-                content="Add an employee"
-                trigger={
-                  <i
-                    className={`user plus icon ${styles.addUser}`}
-                    onClick={() => setOpen((prev) => !prev)}
-                  ></i>
-                }
-              />
-            }
-            columns={columns}
-            data={data}
-            highlightDates={[pre]}
-            // highlightOnHover
-            // pointerOnHover
-            pagination
-            selectableRows
-            expandableRows
-            expandableRowsComponent={ExpandedComponent}
-            contextActions={contextActions}
-            onSelectedRowsChange={handleRowSelected}
-            clearSelectedRows={toggleCleared}
-          />
+          <Table basic="very" style={{ padding: "5rem", textAlign: "center" }}>
+            <Table.Header>
+              <Table.Row>
+                <Table.HeaderCell>Name</Table.HeaderCell>
+                <Table.HeaderCell>Action</Table.HeaderCell>
+                <Table.HeaderCell>Advance</Table.HeaderCell>
+                <Table.HeaderCell>Remarks</Table.HeaderCell>
+                <Table.HeaderCell>Edit/Delete</Table.HeaderCell>
+              </Table.Row>
+            </Table.Header>
+
+            <Table.Body>
+              {data.map((val, index) => (
+                <Table.Row key={index}>
+                  <Table.Cell>
+                    <Label ribbon>{val.name}</Label>
+                  </Table.Cell>
+                  <Table.Cell>
+                    {
+                      <div className="ui small buttons">
+                        <Button
+                          basic={
+                            val.attendance.find(
+                              (value) =>
+                                value.date ==
+                                  startDate.toISOString().slice(0, 10) &&
+                                value.status == "p"
+                            ) == undefined
+                              ? true
+                              : false
+                          }
+                          color="green"
+                          onClick={(e) => handleAction("status", "p", val.id)}
+                        >
+                          P
+                        </Button>
+                        <div className="or"></div>
+                        <Button
+                          basic={
+                            val.attendance.find(
+                              (value) =>
+                                value.date ==
+                                  startDate.toISOString().slice(0, 10) &&
+                                value.status == "a"
+                            ) == undefined
+                              ? true
+                              : false
+                          }
+                          color="red"
+                          onClick={(e) => handleAction("status", "a", val.id)}
+                        >
+                          A
+                        </Button>
+                      </div>
+                    }
+                  </Table.Cell>
+                  <Table.Cell>
+                    <div className={`ui labeled input ${styles.advance}`}>
+                      <div className="ui basic label">₹</div>
+                      <input
+                        type="number"
+                        placeholder="Amount"
+                        value={
+                          val.attendance.find(
+                            (value) =>
+                              value.date ==
+                                startDate.toISOString().slice(0, 10) &&
+                              value.advance > 0
+                          ) == undefined
+                            ? ""
+                            : val.attendance.find(
+                                (value) =>
+                                  value.date ==
+                                    startDate.toISOString().slice(0, 10) &&
+                                  value.advance > 0
+                              ).advance
+                        }
+                        onChange={(e) =>
+                          handleAction("advance", e.target.value, val.id)
+                        }
+                      />
+                    </div>
+                  </Table.Cell>
+                  <Table.Cell>
+                    <form className="ui form">
+                      <textarea
+                        placeholder="Remarks..."
+                        rows="1"
+                        className={styles.remarks}
+                        value={
+                          val.attendance.find(
+                            (value) =>
+                              value.date ==
+                                startDate.toISOString().slice(0, 10) &&
+                              value.remarks
+                          ) == undefined
+                            ? ""
+                            : val.attendance.find(
+                                (value) =>
+                                  value.date ==
+                                    startDate.toISOString().slice(0, 10) &&
+                                  value.remarks.length > 0
+                              ).remarks
+                        }
+                        onChange={(e) =>
+                          handleAction("remarks", e.target.value, val.id)
+                        }
+                      ></textarea>
+                    </form>
+                  </Table.Cell>
+                  <Table.Cell>
+                    {
+                      <div className="ui small buttons">
+                        <Button basic color="green">
+                          <Icon name="edit" />
+                          Edit
+                        </Button>
+                        <div className="or"></div>
+                        <Button basic color="red">
+                          <Icon name="delete" />
+                          Delete
+                        </Button>
+                      </div>
+                    }
+                  </Table.Cell>
+                </Table.Row>
+              ))}
+            </Table.Body>
+          </Table>
         </main>
       </div>
       {
@@ -334,7 +436,10 @@ export default function Home() {
             <Form>
               <Form.Input
                 required
-                error={nameError && "Avoid using numbers and specials characters except(,.'-)"}
+                error={
+                  nameError &&
+                  "Avoid using numbers and specials characters except(,.'-)"
+                }
                 fluid
                 label="Name"
                 placeholder="Name"
@@ -352,7 +457,7 @@ export default function Home() {
                   type="number"
                   min="1"
                   value={salary}
-                  onChange={(e)=>setsalary(e.target.value)}
+                  onChange={(e) => setsalary(e.target.value)}
                 />
                 <Form.Input
                   required
@@ -361,7 +466,7 @@ export default function Home() {
                   label="Start Date"
                   type="date"
                   value={date}
-                  onChange={(e)=>setdate(e.target.value)}
+                  onChange={(e) => setdate(e.target.value)}
                 />
               </Form.Group>
             </Form>
@@ -370,7 +475,12 @@ export default function Home() {
             <Button color="red" onClick={() => setOpen(false)}>
               <Icon name="remove" /> Cancel
             </Button>
-            <Button color="green" onClick={() => setOpen(false)} disabled={addEmp} onClick={handleEmpSubmit}>
+            <Button
+              color="green"
+              onClick={() => setOpen(false)}
+              disabled={addEmp}
+              onClick={handleEmpSubmit}
+            >
               <Icon name="checkmark" /> Add
             </Button>
           </Modal.Actions>
