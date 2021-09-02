@@ -12,6 +12,9 @@ import {
   Label,
   Table,
   Menu,
+  Pagination,
+  Dimmer,
+  Loader,
 } from "semantic-ui-react";
 import { useEffect, useState } from "react";
 import dateFormat from "dateformat";
@@ -19,22 +22,28 @@ import { useRouter } from "next/router";
 
 export default function Home() {
   const router = useRouter();
-  // const [dummy, setdummy]=useState([]);
+  let totalChanges = 0;
+  const [login, setLogin] = useState(false);
+  const [updateChange, setupdateChange] = useState(0);
   const [startDate, setStartDate] = useState(new Date());
   const [isOpen, setIsOpen] = useState(false);
   const [open, setOpen] = useState(false);
   const [data, setData] = useState([]);
+  const [dummy, setDummy] = useState([]);
   const [name, setname] = useState("");
   const [salary, setsalary] = useState();
   const [date, setdate] = useState("");
   const [nameError, setnameError] = useState(false);
   const [addEmp, setAddEmp] = useState(true);
+  const [submitting, setsubmitting] = useState(false);
   const nameRegex = new RegExp(/^[a-z]+[a-z ,.'-]+[a-z]+$/i);
   useEffect(() => {
+    setLogin(localStorage.getItem("accessToken") != undefined ? true : false);
     if (localStorage.getItem("accessToken") == undefined)
       router.replace("/login");
     else {
       let obj = {};
+      setsubmitting(true);
       obj.accessToken = localStorage.getItem("accessToken");
       fetch("http://localhost:1111/verifyaccess", {
         method: "POST",
@@ -71,9 +80,32 @@ export default function Home() {
               })
               .then((val) => {
                 setData(val.data);
+                fetch("http://localhost:2222/getAttendance", {
+                  headers: {
+                    userid: datarec.userid,
+                  },
+                })
+                  .then((response) => {
+                    if (response.status >= 200 && response.status <= 299) {
+                      return response.json();
+                    } else {
+                      return response.text().then((text) => {
+                        throw new Error(text);
+                      });
+                    }
+                  })
+                  .then((val) => {
+                    setDummy(val.data);
+                    setsubmitting(false);
+                  })
+                  .catch((err) => {
+                    console.log(err.message);
+                    setsubmitting(false);
+                  });
               })
               .catch((err) => {
                 console.log(err.message);
+                setsubmitting(false);
               });
           } else {
             localStorage.removeItem("accessToken");
@@ -81,7 +113,7 @@ export default function Home() {
           }
         })
         .catch((err) => {
-          console.log(err.message);
+          setsubmitting(false);
           if (
             err.message.includes("jwt expired") ||
             err.message.includes("jwt malformed")
@@ -114,6 +146,7 @@ export default function Home() {
         router.replace("/login");
       else {
         let obj = {};
+        setsubmitting(true);
         obj.accessToken = localStorage.getItem("accessToken");
         fetch("http://localhost:1111/verifyaccess", {
           method: "POST",
@@ -143,6 +176,7 @@ export default function Home() {
                     );
                   }),
                   salary: salary,
+                  startDate: date,
                   attendance: {},
                 },
               };
@@ -168,9 +202,11 @@ export default function Home() {
                   setname("");
                   setsalary();
                   setdate("");
+                  setsubmitting(false);
                 })
                 .catch((err) => {
                   console.log(err.message);
+                  setsubmitting(false);
                 });
             } else {
               localStorage.removeItem("accessToken");
@@ -178,7 +214,7 @@ export default function Home() {
             }
           })
           .catch((err) => {
-            console.log(err.message);
+            setsubmitting(false);
             if (
               err.message.includes("jwt expired") ||
               err.message.includes("jwt malformed")
@@ -208,13 +244,165 @@ export default function Home() {
       }
     });
   };
-  const ExpandedComponent = ({ data }) => {
+  useEffect(() => {
+    totalChanges = 0;
+    if (data.length > 0) {
+      data.forEach((valuee) => {
+        if (valuee.attendance.length) {
+          valuee.attendance.forEach((valu) => {
+            if (valu.date == startDate.toISOString().slice(0, 10)) {
+              dummy.forEach((vale) => {
+                if (vale.attendance.length) {
+                  vale.attendance.forEach((value) => {
+                    if (valu.date == value.date && valu.uid == value.uid) {
+                      if (
+                        valu.status != undefined &&
+                        valu.status != value.status
+                      )
+                        totalChanges += 1;
+                      if (
+                        valu.advance != undefined &&
+                        valu.advance != value.advance &&
+                        valu.advance != ""
+                      )
+                        totalChanges += 1;
+                      if (
+                        valu.remarks != undefined &&
+                        valu.remarks != value.remarks &&
+                        valu.remarks != ""
+                      )
+                        totalChanges += 1;
+                    }
+                  });
+                } else {
+                  for (const key in valu) {
+                    if (
+                      valu[key] != "" &&
+                      key != "date" &&
+                      key != "_id" &&
+                      key != "uid"
+                    )
+                      totalChanges += 1;
+                  }
+                }
+              });
+            } else {
+              for (const key in valu) {
+                if (
+                  valu[key] != "" &&
+                  key != "date" &&
+                  key != "_id" &&
+                  key != "uid"
+                )
+                  totalChanges += 1;
+              }
+            }
+          });
+        }
+      });
+    }
+    setupdateChange(totalChanges);
+  }, [data]);
+  const cancelChanges = () => {
+    setData(dummy);
+  };
+  const saveChanges = () => {
+    let obj = {};
+    obj.accessToken = localStorage.getItem("accessToken");
+    setsubmitting(true);
+    fetch("http://localhost:1111/verifyaccess", {
+      method: "POST",
+      body: JSON.stringify(obj),
+      headers: {
+        "Content-type": "application/json; charset=UTF-8",
+      },
+    })
+      .then((response) => {
+        if (response.status >= 200 && response.status <= 299) {
+          return response.json();
+        } else {
+          return response.text().then((text) => {
+            throw new Error(text);
+          });
+        }
+      })
+      .then((datarec) => {
+        if (datarec.accessToken) {
+          localStorage.setItem("accessToken", datarec.accessToken);
+          let obj = {
+            userid: datarec.userid,
+            data: data,
+          };
+          fetch("http://localhost:2222/updateemp", {
+            method: "POST",
+            body: JSON.stringify(obj),
+            headers: {
+              "Content-type": "application/json; charset=UTF-8",
+            },
+          })
+            .then((response) => {
+              if (response.status >= 200 && response.status <= 299) {
+                return response.json();
+              } else {
+                return response.text().then((text) => {
+                  throw new Error(text);
+                });
+              }
+            })
+            .then((val) => {
+              setData(val.data);
+              setupdateChange(0);
+              fetch("http://localhost:2222/getAttendance", {
+                headers: {
+                  userid: datarec.userid,
+                },
+              })
+                .then((response) => {
+                  if (response.status >= 200 && response.status <= 299) {
+                    return response.json();
+                  } else {
+                    return response.text().then((text) => {
+                      throw new Error(text);
+                    });
+                  }
+                })
+                .then((val) => {
+                  setDummy(val.data);
+                  setupdateChange(0);
+                  setsubmitting(false);
+                })
+                .catch((err) => {
+                  console.log(err.message);
+                  setsubmitting(false);
+                });
+            })
+            .catch((err) => {
+              console.log(err.message);
+              setsubmitting(false);
+            });
+        } else {
+          localStorage.removeItem("accessToken");
+          router.replace("/login");
+        }
+      })
+      .catch((err) => {
+        setsubmitting(false);
+        if (
+          err.message.includes("jwt expired") ||
+          err.message.includes("jwt malformed")
+        ) {
+          localStorage.removeItem("accessToken");
+          router.replace("/login");
+        }
+      });
+  };
+  const ExpandedComponent = (val) => {
     return (
-      <div className={styles.exapnded}>
+      <div className={styles.expanded}>
         <Button as="div" labelPosition="right" className={styles.expandLabel}>
           <Button color="black">
             <Icon name="money" />
-            Amount to be paid(Total Amount-Advance)-
+            To Pay -
           </Button>
           <Label basic color="black" pointing="left">
             2,048
@@ -223,7 +411,7 @@ export default function Home() {
         <Button as="div" labelPosition="right" className={styles.expandLabel}>
           <Button color="orange">
             <Icon name="money" />
-            Total
+            Total Sal
           </Button>
           <Label basic color="orange" pointing="left">
             2,048
@@ -232,7 +420,7 @@ export default function Home() {
         <Button as="div" labelPosition="right" className={styles.expandLabel}>
           <Button color="grey">
             <Icon name="bell" />
-            Advance-
+            Advance
           </Button>
           <Label basic color="grey" pointing="left">
             2,048
@@ -250,7 +438,7 @@ export default function Home() {
         <Button as="div" labelPosition="right" className={styles.expandLabel}>
           <Button color="red">
             <Icon name="close" />
-            Absent-
+            Absent -
           </Button>
           <Label basic color="red" pointing="left">
             2,048
@@ -267,22 +455,15 @@ export default function Home() {
           <meta name="description" content="Generated by create next app" />
           <link rel="icon" href="/favicon.ico" />
         </Head>
-        <main className={styles.main}>
-          {/* <h1 className={styles.heading}>Attendance Management System</h1> */}
-          <div className={styles.calendar}>
+        <div className={styles.navbar}>
+          <a onClick={() => rout.push("/")} className={styles.navlogo}>
+            MAYUR
+          </a>
+          <div className={styles.calendarButton}>
             <Button
               content={dateFormat(startDate, "dddd, mmmm dS, yyyy")}
               secondary
               onClick={handleClick}
-            />
-            <Popup
-              content="Add an employee"
-              trigger={
-                <i
-                  className={`user plus icon ${styles.addUser}`}
-                  onClick={() => setOpen((prev) => !prev)}
-                ></i>
-              }
             />
             {isOpen && (
               <DatePicker
@@ -293,135 +474,209 @@ export default function Home() {
               />
             )}
           </div>
-          <Table basic="very" style={{ padding: "5rem", textAlign: "center" }}>
-            <Table.Header>
-              <Table.Row>
-                <Table.HeaderCell>Name</Table.HeaderCell>
-                <Table.HeaderCell>Action</Table.HeaderCell>
-                <Table.HeaderCell>Advance</Table.HeaderCell>
-                <Table.HeaderCell>Remarks</Table.HeaderCell>
-                <Table.HeaderCell>Edit/Delete</Table.HeaderCell>
-              </Table.Row>
-            </Table.Header>
-
-            <Table.Body>
-              {data.map((val, index) => (
-                <Table.Row key={index}>
-                  <Table.Cell>
-                    <Label ribbon>{val.name}</Label>
-                  </Table.Cell>
-                  <Table.Cell>
-                    {
-                      <div className="ui small buttons">
-                        <Button
-                          basic={
-                            val.attendance.find(
-                              (value) =>
-                                value.date ==
-                                  startDate.toISOString().slice(0, 10) &&
-                                value.status == "p"
-                            ) == undefined
-                              ? true
-                              : false
+          <Button animated style={{ margin: "0" }}>
+            <Button.Content visible>
+              {login ? "Logout" : "Login"}
+            </Button.Content>
+            <Button.Content hidden>
+              <Icon name="arrow right" />
+            </Button.Content>
+          </Button>
+        </div>
+        <main className={styles.main}>
+          <div className={styles.addanemp}>
+            <Popup
+              content="Add an employee"
+              trigger={
+                <i
+                  className={`user plus icon ${styles.addUser}`}
+                  onClick={() => setOpen((prev) => !prev)}
+                ></i>
+              }
+            />
+          </div>
+          <div className={styles.tableResponsive}>
+            <Table basic="very" unstackable textAlign="center">
+              <Table.Header>
+                <Table.Row>
+                  <Table.HeaderCell></Table.HeaderCell>
+                  <Table.HeaderCell>Name</Table.HeaderCell>
+                  <Table.HeaderCell>Action</Table.HeaderCell>
+                  <Table.HeaderCell>Advance</Table.HeaderCell>
+                  <Table.HeaderCell>Remarks</Table.HeaderCell>
+                  <Table.HeaderCell>Edit/Delete</Table.HeaderCell>
+                </Table.Row>
+              </Table.Header>
+              <Table.Body>
+                {data.length > 0 && !submitting ? (
+                  data.map((val, index) => (
+                    <Table.Row key={index}>
+                      <Table.Cell>
+                        <Popup
+                          content={() => ExpandedComponent(val)}
+                          trigger={
+                            <Icon
+                              name="attention"
+                              className={styles.viewDetail}
+                            />
                           }
-                          color="green"
-                          onClick={(e) => handleAction("status", "p", val.id)}
+                        />
+                      </Table.Cell>
+                      <Table.Cell>
+                        <Label ribbon>{val.name}</Label>
+                      </Table.Cell>
+                      <Table.Cell>
+                        {
+                          <div className="ui small buttons">
+                            <Button
+                              basic={
+                                val.attendance.find(
+                                  (value) =>
+                                    value.date ==
+                                      startDate.toISOString().slice(0, 10) &&
+                                    value.status == "p"
+                                ) == undefined
+                                  ? true
+                                  : false
+                              }
+                              color="green"
+                              onClick={(e) =>
+                                handleAction("status", "p", val.id)
+                              }
+                            >
+                              P
+                            </Button>
+                            <div className="or"></div>
+                            <Button
+                              basic={
+                                val.attendance.find(
+                                  (value) =>
+                                    value.date ==
+                                      startDate.toISOString().slice(0, 10) &&
+                                    value.status == "a"
+                                ) == undefined
+                                  ? true
+                                  : false
+                              }
+                              color="red"
+                              onClick={(e) =>
+                                handleAction("status", "a", val.id)
+                              }
+                            >
+                              A
+                            </Button>
+                          </div>
+                        }
+                      </Table.Cell>
+                      <Table.Cell style={{ paddingLeft: "1rem" }}>
+                        <div
+                          className={`ui labeled input ${styles.advance}`}
+                          style={{ marginRight: "2rem" }}
                         >
-                          P
-                        </Button>
-                        <div className="or"></div>
-                        <Button
-                          basic={
-                            val.attendance.find(
-                              (value) =>
-                                value.date ==
-                                  startDate.toISOString().slice(0, 10) &&
-                                value.status == "a"
-                            ) == undefined
-                              ? true
-                              : false
-                          }
-                          color="red"
-                          onClick={(e) => handleAction("status", "a", val.id)}
-                        >
-                          A
-                        </Button>
-                      </div>
-                    }
-                  </Table.Cell>
-                  <Table.Cell>
-                    <div className={`ui labeled input ${styles.advance}`}>
-                      <div className="ui basic label">₹</div>
-                      <input
-                        type="number"
-                        placeholder="Amount"
-                        value={
-                          val.attendance.find(
-                            (value) =>
-                              value.date ==
-                                startDate.toISOString().slice(0, 10) &&
-                              value.advance > 0
-                          ) == undefined
-                            ? ""
-                            : val.attendance.find(
+                          <div className="ui basic label">₹</div>
+                          <input
+                            type="number"
+                            placeholder="Amount"
+                            value={
+                              val.attendance.find(
                                 (value) =>
                                   value.date ==
                                     startDate.toISOString().slice(0, 10) &&
                                   value.advance > 0
-                              ).advance
-                        }
-                        onChange={(e) =>
-                          handleAction("advance", e.target.value, val.id)
-                        }
-                      />
-                    </div>
-                  </Table.Cell>
-                  <Table.Cell>
-                    <form className="ui form">
-                      <textarea
-                        placeholder="Remarks..."
-                        rows="1"
-                        className={styles.remarks}
-                        value={
-                          val.attendance.find(
-                            (value) =>
-                              value.date ==
-                                startDate.toISOString().slice(0, 10) &&
-                              value.remarks
-                          ) == undefined
-                            ? ""
-                            : val.attendance.find(
+                              ) == undefined
+                                ? ""
+                                : val.attendance.find(
+                                    (value) =>
+                                      value.date ==
+                                        startDate.toISOString().slice(0, 10) &&
+                                      value.advance > 0
+                                  ).advance
+                            }
+                            onChange={(e) =>
+                              handleAction("advance", e.target.value, val.id)
+                            }
+                          />
+                        </div>
+                      </Table.Cell>
+                      <Table.Cell>
+                        <form className="ui form">
+                          <textarea
+                            placeholder="Remarks..."
+                            rows="1"
+                            className={styles.remarks}
+                            value={
+                              val.attendance.find(
                                 (value) =>
                                   value.date ==
                                     startDate.toISOString().slice(0, 10) &&
-                                  value.remarks.length > 0
-                              ).remarks
+                                  value.remarks
+                              ) == undefined
+                                ? ""
+                                : val.attendance.find(
+                                    (value) =>
+                                      value.date ==
+                                        startDate.toISOString().slice(0, 10) &&
+                                      value.remarks.length > 0
+                                  ).remarks
+                            }
+                            onChange={(e) =>
+                              handleAction("remarks", e.target.value, val.id)
+                            }
+                          ></textarea>
+                        </form>
+                      </Table.Cell>
+                      <Table.Cell>
+                        {
+                          <div className="ui small buttons">
+                            <Button basic color="green">
+                              <Icon name="edit" />
+                              Edit
+                            </Button>
+                            <div className="or"></div>
+                            <Button basic color="red">
+                              <Icon name="delete" />
+                              Delete
+                            </Button>
+                          </div>
                         }
-                        onChange={(e) =>
-                          handleAction("remarks", e.target.value, val.id)
-                        }
-                      ></textarea>
-                    </form>
-                  </Table.Cell>
-                  <Table.Cell>
-                    {
-                      <div className="ui small buttons">
-                        <Button basic color="green">
-                          <Icon name="edit" />
-                          Edit
-                        </Button>
-                        <div className="or"></div>
-                        <Button basic color="red">
-                          <Icon name="delete" />
-                          Delete
-                        </Button>
-                      </div>
-                    }
-                  </Table.Cell>
+                      </Table.Cell>
+                    </Table.Row>
+                  ))
+                ) : (
+                  <>
+                    {data.length == 0 ? (
+                      <Dimmer active>
+                        <Loader indeterminate>Preparing Data</Loader>
+                      </Dimmer>
+                    ) : (
+                      <Dimmer active>
+                        <Loader indeterminate>Updating Data</Loader>
+                      </Dimmer>
+                    )}
+                  </>
+                )}
+              </Table.Body>
+              <Table.Footer fullWidth>
+                <Table.Row>
+                  <Table.HeaderCell />
+                  <Table.HeaderCell colSpan="4">
+                    <Pagination defaultActivePage={5} totalPages={10} />
+                  </Table.HeaderCell>
                 </Table.Row>
-              ))}
-            </Table.Body>
-          </Table>
+              </Table.Footer>
+            </Table>
+          </div>
+          {updateChange > 0 && (
+            <div className={styles.sticky}>
+              <Label color="black" ribbon>
+                {updateChange} unsaved changes
+              </Label>
+              <div>
+                <Button content="Cancel" negative onClick={cancelChanges} />
+                <Button content="Save" color="grey" onClick={saveChanges} />
+              </div>
+            </div>
+          )}
         </main>
       </div>
       {
