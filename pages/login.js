@@ -24,7 +24,6 @@ export default function Login() {
   const [otpErrorMessage, setotpErrorMessage] = useState("");
   const [signupSuccessMessage, setsignupSuccessMessage] = useState("");
   const [loginOpen, setloginOpen] = useState(false);
-  const [OrHorizontal, setOrHorizontal] = useState(false);
   const [validSignupForm, setvalidSignupForm] = useState(true);
   const [validLoginForm, setvalidLoginForm] = useState(true);
   const [signupSuccess, setsignupSuccess] = useState(false);
@@ -39,7 +38,6 @@ export default function Login() {
   const [passwordError, setpasswordError] = useState(false);
   const [confpasswordError, setconfpasswordError] = useState(false);
   const [confirmpassword, setconfirmpassword] = useState("");
-  const screenWidth = useWindowDimensions();
   const passwordRegex = new RegExp(
     "^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*_=+-]).{8,}$"
   );
@@ -47,41 +45,6 @@ export default function Login() {
     /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
   );
   const nameRegex = new RegExp(/^[a-z]+[a-z ,.'-]+[a-z]+$/i);
-  function getWindowDimensions() {
-    if (typeof window != "undefined") {
-      const { innerWidth: width, innerHeight: height } = window;
-      return {
-        width,
-      };
-    }
-  }
-  function useWindowDimensions() {
-    const [windowDimensions, setWindowDimensions] = useState(
-      getWindowDimensions()
-    );
-
-    useEffect(() => {
-      if (localStorage.getItem("accessToken")) router.replace("/");
-      setsignupSuccess(
-        localStorage.getItem("x-auth-token") != undefined ? true : false
-      );
-      function handleResize() {
-        setWindowDimensions(getWindowDimensions());
-      }
-      window.addEventListener("resize", handleResize);
-      return () => window.removeEventListener("resize", handleResize);
-    }, []);
-
-    return windowDimensions;
-  }
-  useEffect(() => {
-    if (screenWidth.width <= 767) {
-      setOrHorizontal(true);
-    }
-    if (screenWidth.width > 767) {
-      setOrHorizontal(false);
-    }
-  }, [screenWidth]);
   useEffect(() => {
     setloginErrorMessage("");
     setsignupErrorMessage("");

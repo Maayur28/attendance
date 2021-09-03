@@ -24,6 +24,7 @@ export default function Home() {
   const router = useRouter();
   let totalChanges = 0;
   const [login, setLogin] = useState(false);
+  const [displayDate, setdisplayDate] = useState('');
   const [updateChange, setupdateChange] = useState(0);
   const [startDate, setStartDate] = useState(new Date());
   const [isOpen, setIsOpen] = useState(false);
@@ -32,11 +33,41 @@ export default function Home() {
   const [dummy, setDummy] = useState([]);
   const [name, setname] = useState("");
   const [salary, setsalary] = useState();
-  const [date, setdate] = useState("");
+  const [date, setdate] = useState(new Date().toISOString().split('T')[0]);
   const [nameError, setnameError] = useState(false);
   const [addEmp, setAddEmp] = useState(true);
   const [submitting, setsubmitting] = useState(false);
   const nameRegex = new RegExp(/^[a-z]+[a-z ,.'-]+[a-z]+$/i);
+  const screenWidth = useWindowDimensions();
+
+  function getWindowDimensions() {
+    if (typeof window != "undefined") {
+      const { innerWidth: width, innerHeight: height } = window;
+      return {
+        width,
+      };
+    }
+  }
+  function useWindowDimensions() {
+    const [windowDimensions, setWindowDimensions] = useState(
+      getWindowDimensions()
+    );
+
+    useEffect(() => {
+      function handleResize() {
+        setWindowDimensions(getWindowDimensions());
+      }
+      window.addEventListener("resize", handleResize);
+      return () => window.removeEventListener("resize", handleResize);
+    }, []);
+
+    return windowDimensions;
+  }
+  useEffect(() => {
+    if(screenWidth.width>1000)
+    setdisplayDate(dateFormat(startDate, "dddd, mmmm dS, yyyy"))
+  }, [screenWidth]);
+
   useEffect(() => {
     setLogin(localStorage.getItem("accessToken") != undefined ? true : false);
     if (localStorage.getItem("accessToken") == undefined)
@@ -131,6 +162,7 @@ export default function Home() {
   const handleChange = (e) => {
     setIsOpen(!isOpen);
     setStartDate(e);
+    console.log(totalChanges);
   };
   const handleClick = (e) => {
     e.preventDefault();
@@ -227,11 +259,16 @@ export default function Home() {
     }
   };
   const handleAction = (key, val, id) => {
+    console.log(totalChanges);
     data.forEach((value) => {
       if (value.id == id) {
         if (value.attendance.length)
           value.attendance.forEach((valu) => {
             if (valu.date == startDate.toISOString().slice(0, 10)) {
+              if (key == "status" && val == "a") {
+                delete valu["advance"];
+                delete valu["remarks"];
+              }
               valu[key] = val;
             }
           });
@@ -245,7 +282,7 @@ export default function Home() {
     });
   };
   useEffect(() => {
-    totalChanges = 0;
+    console.log(totalChanges);
     if (data.length > 0) {
       data.forEach((valuee) => {
         if (valuee.attendance.length) {
@@ -254,57 +291,39 @@ export default function Home() {
               dummy.forEach((vale) => {
                 if (vale.attendance.length) {
                   vale.attendance.forEach((value) => {
+                    console.log(valu.date, value.date);
                     if (valu.date == value.date && valu.uid == value.uid) {
                       if (
-                        valu.status != undefined &&
+                        valu.status != "undefined" &&
                         valu.status != value.status
                       )
                         totalChanges += 1;
                       if (
-                        valu.advance != undefined &&
-                        valu.advance != value.advance &&
-                        valu.advance != ""
+                        valu.advance != "undefined" &&
+                        valu.advance != value.advance
                       )
                         totalChanges += 1;
                       if (
-                        valu.remarks != undefined &&
-                        valu.remarks != value.remarks &&
-                        valu.remarks != ""
+                        valu.remarks != "undefined" &&
+                        valu.remarks != value.remarks
                       )
                         totalChanges += 1;
                     }
                   });
-                } else {
-                  for (const key in valu) {
-                    if (
-                      valu[key] != "" &&
-                      key != "date" &&
-                      key != "_id" &&
-                      key != "uid"
-                    )
-                      totalChanges += 1;
-                  }
                 }
               });
-            } else {
-              for (const key in valu) {
-                if (
-                  valu[key] != "" &&
-                  key != "date" &&
-                  key != "_id" &&
-                  key != "uid"
-                )
-                  totalChanges += 1;
-              }
             }
           });
         }
       });
     }
     setupdateChange(totalChanges);
-  }, [data]);
+    console.log(totalChanges);
+  }, [data, dummy]);
   const cancelChanges = () => {
     setData(dummy);
+    setupdateChange(0);
+    totalChanges = 0;
   };
   const saveChanges = () => {
     let obj = {};
@@ -352,6 +371,7 @@ export default function Home() {
             .then((val) => {
               setData(val.data);
               setupdateChange(0);
+              totalChanges = 0;
               fetch("http://localhost:2222/getAttendance", {
                 headers: {
                   userid: datarec.userid,
@@ -369,6 +389,7 @@ export default function Home() {
                 .then((val) => {
                   setDummy(val.data);
                   setupdateChange(0);
+                  totalChanges = 0;
                   setsubmitting(false);
                 })
                 .catch((err) => {
@@ -461,18 +482,12 @@ export default function Home() {
           </a>
           <div className={styles.calendarButton}>
             <Button
-              content={dateFormat(startDate, "dddd, mmmm dS, yyyy")}
+              content={displayDate}
               secondary
               onClick={handleClick}
+              disabled={updateChange > 0 ? true : false}
             />
-            {isOpen && (
-              <DatePicker
-                todayButton="Today"
-                selected={startDate}
-                onChange={handleChange}
-                inline
-              />
-            )}
+           
           </div>
           <Button animated style={{ margin: "0" }}>
             <Button.Content visible>
@@ -484,6 +499,14 @@ export default function Home() {
           </Button>
         </div>
         <main className={styles.main}>
+        {isOpen && (
+              <DatePicker
+                todayButton="Today"
+                selected={startDate}
+                onChange={handleChange}
+                inline
+              />
+            )}
           <div className={styles.addanemp}>
             <Popup
               content="Add an employee"
@@ -592,6 +615,16 @@ export default function Home() {
                                       value.advance > 0
                                   ).advance
                             }
+                            disabled={
+                              val.attendance.find(
+                                (value) =>
+                                  value.date ==
+                                    startDate.toISOString().slice(0, 10) &&
+                                  value.status == "a"
+                              ) == undefined
+                                ? false
+                                : true
+                            }
                             onChange={(e) =>
                               handleAction("advance", e.target.value, val.id)
                             }
@@ -659,7 +692,7 @@ export default function Home() {
               <Table.Footer fullWidth>
                 <Table.Row>
                   <Table.HeaderCell />
-                  <Table.HeaderCell colSpan="4">
+                  <Table.HeaderCell colSpan="12">
                     <Pagination defaultActivePage={5} totalPages={10} />
                   </Table.HeaderCell>
                 </Table.Row>
@@ -720,6 +753,7 @@ export default function Home() {
                   fluid
                   label="Start Date"
                   type="date"
+                  max={(new Date()).toISOString().split('T')[0]}
                   value={date}
                   onChange={(e) => setdate(e.target.value)}
                 />
