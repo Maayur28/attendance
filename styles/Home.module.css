@@ -12,8 +12,9 @@
 }
 .calendarButton{
   z-index: 100;
-  /* position: absolute;
-  left: 40%; */
+  position: absolute;
+  left: 40%;
+  top:1vh;
 }
 .navlogo{
   height: fit-content;
@@ -36,13 +37,24 @@
 }
 .addanemp{
   display: flex;
+  height:60px;
+  align-items:center;
   justify-content: flex-end;
+}
+.search{
+  display: flex;
+  height:60px;
+  align-items:center;
+  justify-content: flex-end;
+  margin-right: 30px;
+  margin-bottom: 10px;
 }
 .expanded{
   display: flex;
   flex-direction: column;
-  justify-content: space-evenly;
-  height: 200px;
+  justify-content: center !important;
+  align-items: center !important;
+  width: 30vw;
 }
 .viewDetail{
   color: chocolate;
@@ -89,7 +101,7 @@
   flex: 50%;
 }
 .addUser{
-  font-size: 2rem !important;
+  font-size: 2.3rem !important;
 }
 .present{
   color:green;

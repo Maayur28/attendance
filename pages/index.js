@@ -3,6 +3,7 @@ import DatePicker from "react-datepicker";
 import styles from "../styles/Home.module.css";
 import "semantic-ui-css/semantic.min.css";
 import "react-datepicker/dist/react-datepicker.css";
+import Navbar from "../navbar";
 import {
   Popup,
   Button,
@@ -11,10 +12,13 @@ import {
   Form,
   Label,
   Table,
-  Menu,
+  Header,
   Pagination,
   Dimmer,
   Loader,
+  Dropdown,
+  Statistic,
+  Divider,
 } from "semantic-ui-react";
 import { useEffect, useState } from "react";
 import dateFormat from "dateformat";
@@ -22,24 +26,57 @@ import { useRouter } from "next/router";
 
 export default function Home() {
   const router = useRouter();
+  const [activePage, setactivePage] = useState(1);
+  const [totalPage, settotalPage] = useState(2);
+  const [calAlign, setcalAlign] = useState("40vw");
+  const [searched, setsearched] = useState(false);
+  const [searchContent, setsearchContent] = useState("");
   let totalChanges = 0;
+  const [dataset, setdataset] = useState(false);
   const [login, setLogin] = useState(false);
-  const [displayDate, setdisplayDate] = useState('');
+  const [displayDate, setdisplayDate] = useState("");
   const [updateChange, setupdateChange] = useState(0);
   const [startDate, setStartDate] = useState(new Date());
   const [isOpen, setIsOpen] = useState(false);
   const [open, setOpen] = useState(false);
   const [data, setData] = useState([]);
+  const [datas, setDatas] = useState([]);
   const [dummy, setDummy] = useState([]);
   const [name, setname] = useState("");
   const [salary, setsalary] = useState();
-  const [date, setdate] = useState(new Date().toISOString().split('T')[0]);
+  const [date, setdate] = useState(new Date().toISOString().split("T")[0]);
   const [nameError, setnameError] = useState(false);
   const [addEmp, setAddEmp] = useState(true);
   const [submitting, setsubmitting] = useState(false);
   const nameRegex = new RegExp(/^[a-z]+[a-z ,.'-]+[a-z]+$/i);
   const screenWidth = useWindowDimensions();
-
+  const options = [
+    {
+      key: "name",
+      text: "Name",
+      value: "name",
+      content: "Name",
+    },
+    {
+      key: "action",
+      text: "Action",
+      value: "action",
+      content: "Action",
+    },
+    {
+      key: "advance",
+      text: "Advance",
+      value: "advance",
+      content: "Advance",
+    },
+    {
+      key: "remarks",
+      text: "Remarks",
+      value: "remarks",
+      content: "Remarks",
+    },
+  ];
+  const [searchDrowndown, setsearchDrowndown] = useState(options[0].content);
   function getWindowDimensions() {
     if (typeof window != "undefined") {
       const { innerWidth: width, innerHeight: height } = window;
@@ -64,15 +101,38 @@ export default function Home() {
     return windowDimensions;
   }
   useEffect(() => {
-    if(screenWidth.width>1000)
-    setdisplayDate(dateFormat(startDate, "dddd, mmmm dS, yyyy"))
-  }, [screenWidth]);
+    if (screenWidth.width > 1000) {
+      setdisplayDate(dateFormat(startDate, "dddd, mmmm dS, yyyy"));
+      setcalAlign("40vw");
+    }
+    if (screenWidth.width > 800 && screenWidth.width < 1000) {
+      setdisplayDate(dateFormat(startDate, "dddd, mmmm dS, yyyy"));
+      setcalAlign("35vw");
+    }
+    if (screenWidth.width > 600 && screenWidth.width < 800) {
+      setdisplayDate(dateFormat(startDate, "dddd, mmmm dS, yyyy"));
+      setcalAlign("30vw");
+    }
+    if (screenWidth.width > 450 && screenWidth.width < 600) {
+      setdisplayDate(dateFormat(startDate, "mmmm dS, yyyy"));
+      setcalAlign("30vw");
+    }
+    if (screenWidth.width > 400 && screenWidth.width < 450) {
+      setdisplayDate(dateFormat(startDate, "ddd,dS"));
+      setcalAlign("40vw");
+    }
+    if (screenWidth.width > 300 && screenWidth.width < 400) {
+      setdisplayDate(dateFormat(startDate, "ddd,dS"));
+      setcalAlign("35vw");
+    }
+  }, [screenWidth, startDate]);
 
   useEffect(() => {
     setLogin(localStorage.getItem("accessToken") != undefined ? true : false);
     if (localStorage.getItem("accessToken") == undefined)
       router.replace("/login");
     else {
+      localStorage.setItem("updateChange", 0);
       let obj = {};
       setsubmitting(true);
       obj.accessToken = localStorage.getItem("accessToken");
@@ -110,7 +170,7 @@ export default function Home() {
                 }
               })
               .then((val) => {
-                setData(val.data);
+                setDatas(val.data);
                 fetch("http://localhost:2222/getAttendance", {
                   headers: {
                     userid: datarec.userid,
@@ -161,8 +221,8 @@ export default function Home() {
   }, [name, salary, date]);
   const handleChange = (e) => {
     setIsOpen(!isOpen);
+    localStorage.setItem("updateChange", updateChange);
     setStartDate(e);
-    console.log(totalChanges);
   };
   const handleClick = (e) => {
     e.preventDefault();
@@ -229,7 +289,7 @@ export default function Home() {
                   }
                 })
                 .then((val) => {
-                  setData(val.data);
+                  setDatas(val.data);
                   setOpen(false);
                   setname("");
                   setsalary();
@@ -278,11 +338,14 @@ export default function Home() {
             [key]: val,
           });
         setData([...data]);
+        setdataset((prevState) => !prevState);
       }
     });
   };
   useEffect(() => {
-    console.log(totalChanges);
+    console.log(totalChanges, data, dummy);
+    totalChanges = Number(localStorage.getItem("updateChange"));
+    if (totalChanges == undefined) totalChanges = 0;
     if (data.length > 0) {
       data.forEach((valuee) => {
         if (valuee.attendance.length) {
@@ -291,7 +354,6 @@ export default function Home() {
               dummy.forEach((vale) => {
                 if (vale.attendance.length) {
                   vale.attendance.forEach((value) => {
-                    console.log(valu.date, value.date);
                     if (valu.date == value.date && valu.uid == value.uid) {
                       if (
                         valu.status != "undefined" &&
@@ -319,11 +381,122 @@ export default function Home() {
     }
     setupdateChange(totalChanges);
     console.log(totalChanges);
-  }, [data, dummy]);
+  }, [dataset, dummy]);
+
+  useEffect(() => {
+    settotalPage(Math.ceil(datas.length / 5));
+    let max = activePage * 5;
+    let min = (activePage - 1) * 5;
+    let dum = [];
+    let dumm = [];
+    if (searchContent) {
+      datas.forEach((val) => {
+        if (searchDrowndown == "Name") {
+          console.log(val);
+          if (val.name.toLowerCase().includes(searchContent)) dumm.push(val);
+        }
+      });
+      console.log(dumm, dumm.length);
+      settotalPage(Math.ceil(dumm.length / 5));
+      for (let i = min; i < dumm.length; i++) {
+        console.log(dumm[i]);
+        if (i < max) dum.push(dumm[i]);
+      }
+      console.log(dum);
+      localStorage.setItem("updateChange", 0);
+    } else {
+      for (let i = min; i < datas.length; i++) {
+        console.log("hello");
+        if (i < max) dum.push(datas[i]);
+      }
+    }
+    localStorage.setItem("updateChange", updateChange);
+    setData(dum);
+  }, [datas, activePage, searchContent]);
+
   const cancelChanges = () => {
-    setData(dummy);
     setupdateChange(0);
-    totalChanges = 0;
+    localStorage.setItem("updateChange", 0);
+    let obj = {};
+    setsubmitting(true);
+    obj.accessToken = localStorage.getItem("accessToken");
+    fetch("http://localhost:1111/verifyaccess", {
+      method: "POST",
+      body: JSON.stringify(obj),
+      headers: {
+        "Content-type": "application/json; charset=UTF-8",
+      },
+    })
+      .then((response) => {
+        if (response.status >= 200 && response.status <= 299) {
+          return response.json();
+        } else {
+          return response.text().then((text) => {
+            throw new Error(text);
+          });
+        }
+      })
+      .then((datarec) => {
+        if (datarec.accessToken) {
+          localStorage.setItem("accessToken", datarec.accessToken);
+          fetch("http://localhost:2222/getAttendance", {
+            headers: {
+              userid: datarec.userid,
+            },
+          })
+            .then((response) => {
+              if (response.status >= 200 && response.status <= 299) {
+                return response.json();
+              } else {
+                return response.text().then((text) => {
+                  throw new Error(text);
+                });
+              }
+            })
+            .then((val) => {
+              setDatas(val.data);
+              fetch("http://localhost:2222/getAttendance", {
+                headers: {
+                  userid: datarec.userid,
+                },
+              })
+                .then((response) => {
+                  if (response.status >= 200 && response.status <= 299) {
+                    return response.json();
+                  } else {
+                    return response.text().then((text) => {
+                      throw new Error(text);
+                    });
+                  }
+                })
+                .then((val) => {
+                  setDummy(val.data);
+                  setsubmitting(false);
+                })
+                .catch((err) => {
+                  console.log(err.message);
+                  setsubmitting(false);
+                });
+            })
+            .catch((err) => {
+              console.log(err.message);
+              setsubmitting(false);
+            });
+        } else {
+          localStorage.removeItem("accessToken");
+          router.replace("/login");
+        }
+      })
+      .catch((err) => {
+        setsubmitting(false);
+        if (
+          err.message.includes("jwt expired") ||
+          err.message.includes("jwt malformed")
+        ) {
+          localStorage.removeItem("accessToken");
+          router.replace("/login");
+        }
+      });
   };
   const saveChanges = () => {
     let obj = {};
@@ -369,9 +542,10 @@ export default function Home() {
               }
             })
             .then((val) => {
-              setData(val.data);
+              setDatas(val.data);
               setupdateChange(0);
               totalChanges = 0;
+              localStorage.setItem("updateChange", 0);
               fetch("http://localhost:2222/getAttendance", {
                 headers: {
                   userid: datarec.userid,
@@ -390,6 +564,7 @@ export default function Home() {
                   setDummy(val.data);
                   setupdateChange(0);
                   totalChanges = 0;
+                  localStorage.setItem("updateChange", 0);
                   setsubmitting(false);
                 })
                 .catch((err) => {
@@ -418,55 +593,78 @@ export default function Home() {
       });
   };
   const ExpandedComponent = (val) => {
+    console.log(val);
+    let absent = 0,
+      present = 0,
+      advance = 0,
+      totalsal = 0,
+      sal = val.salary;
+    for (const da of val.attendance) {
+      if (da.action == "p") {
+        advance += da.advance;
+        present += 1;
+      }
+      if (da.action == "a") absent += 1;
+      else {
+      }
+    }
     return (
       <div className={styles.expanded}>
-        <Button as="div" labelPosition="right" className={styles.expandLabel}>
-          <Button color="black">
-            <Icon name="money" />
-            To Pay -
-          </Button>
-          <Label basic color="black" pointing="left">
-            2,048
-          </Label>
-        </Button>
-        <Button as="div" labelPosition="right" className={styles.expandLabel}>
-          <Button color="orange">
-            <Icon name="money" />
-            Total Sal
-          </Button>
-          <Label basic color="orange" pointing="left">
-            2,048
-          </Label>
-        </Button>
-        <Button as="div" labelPosition="right" className={styles.expandLabel}>
-          <Button color="grey">
-            <Icon name="bell" />
-            Advance
-          </Button>
-          <Label basic color="grey" pointing="left">
-            2,048
-          </Label>
-        </Button>
-        <Button as="div" labelPosition="right" className={styles.expandLabel}>
-          <Button color="green">
-            <Icon name="check" />
-            Present-
-          </Button>
-          <Label basic color="green" pointing="left">
-            2,048
-          </Label>
-        </Button>
-        <Button as="div" labelPosition="right" className={styles.expandLabel}>
-          <Button color="red">
-            <Icon name="close" />
-            Absent -
-          </Button>
-          <Label basic color="red" pointing="left">
-            2,048
-          </Label>
-        </Button>
+        <Statistic.Group size="mini">
+          <Statistic color="purple">
+            <Statistic.Value>
+              <Icon name="rupee" />
+              {sal * present - advance}
+            </Statistic.Value>
+            <div>Total Amount</div>
+          </Statistic>
+
+          <Statistic color="yellow">
+            <Statistic.Value>
+              <Icon name="rupee" />
+              {present * sal}
+            </Statistic.Value>
+            <div>Total Salary</div>
+          </Statistic>
+
+          <Statistic color="orange">
+            <Statistic.Value>
+              <Icon name="rupee" />
+              {advance}
+            </Statistic.Value>
+            <div>Advance</div>
+          </Statistic>
+
+          <Statistic color="green">
+            <Statistic.Value>{present}</Statistic.Value>
+            <div>Present</div>
+          </Statistic>
+          <Statistic color="red">
+            <Statistic.Value>{absent}</Statistic.Value>
+            <div>Absent</div>
+          </Statistic>
+        </Statistic.Group>
+        {/* <div> */}
+        <Divider horizontal>
+          <Header as="h4">
+            <Icon name="tag" />
+            Data not available
+          </Header>
+        </Divider>
+        {/* </div> */}
       </div>
     );
+  };
+  const handlePageChange = (e, data) => {
+    console.log(data);
+    setactivePage(data.activePage);
+  };
+  const handleSearchDropdown = (e) => {
+    setsearchDrowndown(e.target.textContent);
+  };
+  const searchValue = (e) => {
+    setsearchContent(e.target.value);
+    setactivePage(1);
   };
   return (
     <>
@@ -476,38 +674,41 @@ export default function Home() {
           <meta name="description" content="Generated by create next app" />
           <link rel="icon" href="/favicon.ico" />
         </Head>
-        <div className={styles.navbar}>
-          <a onClick={() => rout.push("/")} className={styles.navlogo}>
-            MAYUR
-          </a>
-          <div className={styles.calendarButton}>
-            <Button
-              content={displayDate}
-              secondary
-              onClick={handleClick}
-              disabled={updateChange > 0 ? true : false}
+        <Navbar />
+        <div className={styles.calendarButton} style={{ left: calAlign }}>
+          <Button content={displayDate} secondary onClick={handleClick} />
+          {isOpen && (
+            <DatePicker
+              todayButton="Today"
+              selected={startDate}
+              onChange={handleChange}
+              inline
             />
-           
-          </div>
-          <Button animated style={{ margin: "0" }}>
-            <Button.Content visible>
-              {login ? "Logout" : "Login"}
-            </Button.Content>
-            <Button.Content hidden>
-              <Icon name="arrow right" />
-            </Button.Content>
-          </Button>
+          )}
         </div>
         <main className={styles.main}>
-        {isOpen && (
-              <DatePicker
-                todayButton="Today"
-                selected={startDate}
-                onChange={handleChange}
-                inline
-              />
-            )}
           <div className={styles.addanemp}>
+            <div className={styles.search}>
+              <Dropdown
+                inline
+                onChange={handleSearchDropdown}
+                header="Field based search"
+                options={options}
+                defaultValue={options[0].value}
+              />
+              <div className="search-box">
+                <button className="btn-search">
+                  <Icon name="search" />
+                </button>
+                <input
+                  type="text"
+                  className="input-search"
+                  placeholder="Type to Search..."
+                  value={searchContent}
+                  onChange={searchValue}
+                />
+              </div>
+            </div>
             <Popup
               content="Add an employee"
               trigger={
@@ -531,7 +732,7 @@ export default function Home() {
                 </Table.Row>
               </Table.Header>
               <Table.Body>
-                {data.length > 0 && !submitting ? (
+                {(data.length > 0 || searchContent) && !submitting ? (
                   data.map((val, index) => (
                     <Table.Row key={index}>
                       <Table.Cell>
@@ -546,7 +747,9 @@ export default function Home() {
                         />
                       </Table.Cell>
                       <Table.Cell>
-                        <Label ribbon>{val.name}</Label>
+                        <Label color="black" ribbon>
+                          {val.name}
+                        </Label>
                       </Table.Cell>
                       <Table.Cell>
                         {
@@ -661,7 +864,7 @@ export default function Home() {
                       <Table.Cell>
                         {
                           <div className="ui small buttons">
-                            <Button basic color="green">
+                            <Button basic color="green" onClick={()=>router.push(`/${val.id}`)}>
                               <Icon name="edit" />
                               Edit
                             </Button>
@@ -693,7 +896,11 @@ export default function Home() {
                 <Table.Row>
                   <Table.HeaderCell />
                   <Table.HeaderCell colSpan="12">
-                    <Pagination defaultActivePage={5} totalPages={10} />
+                    <Pagination
+                      defaultActivePage={activePage}
+                      totalPages={totalPage}
+                      onPageChange={handlePageChange}
+                    />
                   </Table.HeaderCell>
                 </Table.Row>
               </Table.Footer>
@@ -753,7 +960,7 @@ export default function Home() {
                   fluid
                   label="Start Date"
                   type="date"
-                  max={(new Date()).toISOString().split('T')[0]}
+                  max={new Date().toISOString().split("T")[0]}
                   value={date}
                   onChange={(e) => setdate(e.target.value)}
                 />
