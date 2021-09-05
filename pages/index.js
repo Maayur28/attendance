@@ -592,69 +592,6 @@ export default function Home() {
         }
       });
   };
-  const ExpandedComponent = (val) => {
-    console.log(val);
-    let absent = 0,
-      present = 0,
-      advance = 0,
-      totalsal = 0,
-      sal = val.salary;
-    for (const da of val.attendance) {
-      if (da.action == "p") {
-        advance += da.advance;
-        present += 1;
-      }
-      if (da.action == "a") absent += 1;
-      else {
-      }
-    }
-    return (
-      <div className={styles.expanded}>
-        <Statistic.Group size="mini">
-          <Statistic color="purple">
-            <Statistic.Value>
-              <Icon name="rupee" />
-              {sal * present - advance}
-            </Statistic.Value>
-            <div>Total Amount</div>
-          </Statistic>
-
-          <Statistic color="yellow">
-            <Statistic.Value>
-              <Icon name="rupee" />
-              {present * sal}
-            </Statistic.Value>
-            <div>Total Salary</div>
-          </Statistic>
-
-          <Statistic color="orange">
-            <Statistic.Value>
-              <Icon name="rupee" />
-              {advance}
-            </Statistic.Value>
-            <div>Advance</div>
-          </Statistic>
-
-          <Statistic color="green">
-            <Statistic.Value>{present}</Statistic.Value>
-            <div>Present</div>
-          </Statistic>
-          <Statistic color="red">
-            <Statistic.Value>{absent}</Statistic.Value>
-            <div>Absent</div>
-          </Statistic>
-        </Statistic.Group>
-        {/* <div> */}
-        <Divider horizontal>
-          <Header as="h4">
-            <Icon name="tag" />
-            Data not available
-          </Header>
-        </Divider>
-        {/* </div> */}
-      </div>
-    );
-  };
   const handlePageChange = (e, data) => {
     console.log(data);
     setactivePage(data.activePage);
@@ -723,7 +660,6 @@ export default function Home() {
             <Table basic="very" unstackable textAlign="center">
               <Table.Header>
                 <Table.Row>
-                  <Table.HeaderCell></Table.HeaderCell>
                   <Table.HeaderCell>Name</Table.HeaderCell>
                   <Table.HeaderCell>Action</Table.HeaderCell>
                   <Table.HeaderCell>Advance</Table.HeaderCell>
@@ -735,17 +671,6 @@ export default function Home() {
                 {(data.length > 0 || searchContent) && !submitting ? (
                   data.map((val, index) => (
                     <Table.Row key={index}>
-                      <Table.Cell>
-                        <Popup
-                          content={() => ExpandedComponent(val)}
-                          trigger={
-                            <Icon
-                              name="attention"
-                              className={styles.viewDetail}
-                            />
-                          }
-                        />
-                      </Table.Cell>
                       <Table.Cell>
                         <Label color="black" ribbon>
                           {val.name}
@@ -818,16 +743,16 @@ export default function Home() {
                                       value.advance > 0
                                   ).advance
                             }
-                            disabled={
-                              val.attendance.find(
-                                (value) =>
-                                  value.date ==
-                                    startDate.toISOString().slice(0, 10) &&
-                                  value.status == "a"
-                              ) == undefined
-                                ? false
-                                : true
-                            }
+                            // disabled={
+                            //   val.attendance.find(
+                            //     (value) =>
+                            //       value.date ==
+                            //         startDate.toISOString().slice(0, 10) &&
+                            //       value.status == "a"
+                            //   ) == undefined
+                            //     ? false
+                            //     : true
+                            // }
                             onChange={(e) =>
                               handleAction("advance", e.target.value, val.id)
                             }
@@ -864,9 +789,13 @@ export default function Home() {
                       <Table.Cell>
                         {
                           <div className="ui small buttons">
-                            <Button basic color="green" onClick={()=>router.push(`/${val.id}`)}>
+                            <Button
+                              basic
+                              color="green"
+                              onClick={() => router.push(`/${val.id}`)}
+                            >
                               <Icon name="edit" />
-                              Edit
+                              View/Edit
                             </Button>
                             <div className="or"></div>
                             <Button basic color="red">
