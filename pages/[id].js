@@ -28,6 +28,7 @@ export default function Slug() {
   const [sal, setsal] = useState(0);
   const [name, setname] = useState("");
   const [open, setOpen] = useState(false);
+  const [startDa, setstartDa] = useState("");
   const [paidOpen, setpaidOpen] = useState(false);
   const [currentDate, setcurrentDate] = useState("");
   useEffect(() => {
@@ -78,6 +79,7 @@ export default function Slug() {
               .then((val) => {
                 val.data.forEach((element) => {
                   if (element.id == router.query.id) {
+                    setstartDa(element.startDate);
                     setData(element.attendance);
                     setsal(element.salary);
                     setname(element.name);
@@ -124,10 +126,16 @@ export default function Slug() {
     }
     return (
       <div className={styles.expanded}>
-        <Header as="h2">
-          <Icon name="user secret" />
-          {name}
-        </Header>
+        <div className={styles.headProf}>
+          <Header as="h2"  style={{margin:'0'}}>
+            <Icon name="user secret" />
+            {name}
+          </Header>
+          <Header as="h2" style={{margin:'0',paddingLeft:'10px'}}>
+            <Icon name="clock" />
+            {startDa}
+          </Header>
+        </div>
         <Statistic.Group size="tiny" className={styles.stats}>
           <Statistic color="purple">
             <Statistic.Value>
@@ -244,6 +252,7 @@ export default function Slug() {
               val.data.forEach((element) => {
                 if (element.id == router.query.id) {
                   setData(element.attendance);
+                  setstartDa(element.startDate);
                   setsal(element.salary);
                   setname(element.name);
                   setupdating(false);
@@ -312,6 +321,7 @@ export default function Slug() {
               val.data.forEach((element) => {
                 if (element.id == router.query.id) {
                   setData(element.attendance);
+                  setstartDa(element.startDate);
                   setsal(element.salary);
                   setname(element.name);
                   setsubmitting(false);
@@ -389,6 +399,7 @@ export default function Slug() {
               val.data.forEach((element) => {
                 if (element.id == router.query.id) {
                   setData(element.attendance);
+                  setstartDa(element.startDate);
                   setsal(element.salary);
                   setname(element.name);
                   setsubmitting(false);
@@ -432,7 +443,7 @@ export default function Slug() {
               </Table.Row>
             </Table.Header>
             <Table.Body>
-              {(data.length > 0 || !updating )&& !submitting ? (
+              {(data.length > 0 || !updating) && !submitting ? (
                 data.map((val, index) => (
                   <Table.Row key={index}>
                     <Table.Cell>
@@ -493,7 +504,7 @@ export default function Slug() {
                     secondary
                     size="small"
                     onClick={() => setpaidOpen(!paidOpen)}
-                    disabled={data.length>0?false:true}
+                    disabled={data.length > 0 ? false : true}
                   >
                     <Icon name="payment" /> Paid
                   </Button>
@@ -633,7 +644,7 @@ export default function Slug() {
             </Modal.Actions>
           </Modal>
           <Confirm
-            header="This will reset and start attendance from tomorrow."
+            header="It will reset current and starts new attendance from tomorrow."
             open={paidOpen}
             onCancel={handlePaidCancel}
             onConfirm={handlePaidConfirm}

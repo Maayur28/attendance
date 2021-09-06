@@ -755,16 +755,6 @@ export default function Home() {
                                       value.advance > 0
                                   ).advance
                             }
-                            // disabled={
-                            //   val.attendance.find(
-                            //     (value) =>
-                            //       value.date ==
-                            //         startDate.toISOString().slice(0, 10) &&
-                            //       value.status == "a"
-                            //   ) == undefined
-                            //     ? false
-                            //     : true
-                            // }
                             onChange={(e) =>
                               handleAction("advance", e.target.value, val.id)
                             }
@@ -841,7 +831,6 @@ export default function Home() {
               </Table.Body>
               <Table.Footer fullWidth>
                 <Table.Row>
-                  <Table.HeaderCell />
                   <Table.HeaderCell colSpan="12">
                     <Pagination
                       defaultActivePage={activePage}

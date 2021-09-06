@@ -136,6 +136,13 @@
 .colorRow {
   cursor: not-allowed !important;
 }
+.headProf{
+  width: 100vw;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  height: 50px;
+}
 @media screen and (max-width: 800px) {
   .loginPageContainer {
     flex-direction: column;
