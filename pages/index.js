@@ -619,6 +619,7 @@ export default function Home() {
               todayButton="Today"
               selected={startDate}
               onChange={handleChange}
+              maxDate={new Date()}
               inline
             />
           )}
@@ -670,7 +671,21 @@ export default function Home() {
               <Table.Body>
                 {(data.length > 0 || searchContent) && !submitting ? (
                   data.map((val, index) => (
-                    <Table.Row key={index}>
+                    <Table.Row
+                      key={index}
+                      active={
+                        new Date(val.startDate).getTime() <=
+                        new Date(startDate).getTime()
+                          ? false
+                          : true
+                      }
+                      disabled={
+                        new Date(val.startDate).getTime() <=
+                        new Date(startDate).getTime()
+                          ? false
+                          : true
+                      }
+                    >
                       <Table.Cell>
                         <Label color="black" ribbon>
                           {val.name}
@@ -765,6 +780,12 @@ export default function Home() {
                             placeholder="Remarks..."
                             rows="1"
                             className={styles.remarks}
+                            disabled={
+                              new Date(val.startDate).getTime() <=
+                              new Date(startDate).getTime()
+                                ? false
+                                : true
+                            }
                             value={
                               val.attendance.find(
                                 (value) =>

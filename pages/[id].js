@@ -15,16 +15,20 @@ import {
   Modal,
   Form,
   Button,
+  Confirm,
 } from "semantic-ui-react";
 import { useState, useEffect } from "react";
 import "semantic-ui-css/semantic.min.css";
 export default function Slug() {
   const router = useRouter();
   const [submitting, setsubmitting] = useState(false);
+  const [updating, setupdating] = useState(false);
   const [data, setData] = useState([]);
   const [login, setLogin] = useState(false);
   const [sal, setsal] = useState(0);
+  const [name, setname] = useState("");
   const [open, setOpen] = useState(false);
+  const [paidOpen, setpaidOpen] = useState(false);
   const [currentDate, setcurrentDate] = useState("");
   console.log(router.query.id);
   useEffect(() => {
@@ -77,6 +81,7 @@ export default function Slug() {
                   if (element.id == router.query.id) {
                     setData(element.attendance);
                     setsal(element.salary);
+                    setname(element.name);
                     setsubmitting(false);
                   }
                 });
@@ -120,6 +125,10 @@ export default function Slug() {
     }
     return (
       <div className={styles.expanded}>
+        <Header as="h2">
+          <Icon name="user secret" />
+          {name}
+        </Header>
         <Statistic.Group size="tiny" className={styles.stats}>
           <Statistic color="purple">
             <Statistic.Value>
@@ -154,7 +163,7 @@ export default function Slug() {
             <div>Absent</div>
           </Statistic>
         </Statistic.Group>
-        <Divider horizontal style={{marginTop:'20px'}}>
+        <Divider horizontal style={{ marginTop: "20px" }}>
           <Header as="h4">
             <Icon name="tag" />
             Data not available(for Dates)
@@ -166,7 +175,7 @@ export default function Slug() {
               color="black"
               key={index}
               style={{ cursor: "pointer" }}
-              onClick={() => openModal({date:val})}
+              onClick={() => openModal({ date: val })}
             >
               {val}
             </Label>
@@ -194,7 +203,7 @@ export default function Slug() {
   const handleUpdate = () => {
     let obj = {};
     obj.accessToken = localStorage.getItem("accessToken");
-    setsubmitting(true);
+    setupdating(true);
     fetch("https://attendance-auth.herokuapp.com/verifyaccess", {
       method: "POST",
       body: JSON.stringify(obj),
@@ -240,14 +249,15 @@ export default function Slug() {
                 if (element.id == router.query.id) {
                   setData(element.attendance);
                   setsal(element.salary);
-                  setsubmitting(false);
+                  setname(element.name);
+                  setupdating(false);
                   setOpen(false);
                 }
               });
             })
             .catch((err) => {
               console.log(err.message);
-              setsubmitting(false);
+              setupdating(false);
             });
         } else {
           localStorage.removeItem("accessToken");
@@ -307,8 +317,86 @@ export default function Slug() {
                 if (element.id == router.query.id) {
                   setData(element.attendance);
                   setsal(element.salary);
+                  setname(element.name);
                   setsubmitting(false);
                   setOpen(false);
+                }
+              });
+            })
+            .catch((err) => {
+              console.log(err.message);
+              setsubmitting(false);
+            });
+        } else {
+          localStorage.removeItem("accessToken");
+          router.replace("/login");
+        }
+      })
+      .catch((err) => {
+        setsubmitting(false);
+        if (
+          err.message.includes("jwt expired") ||
+          err.message.includes("jwt malformed")
+        ) {
+          localStorage.removeItem("accessToken");
+          router.replace("/login");
+        }
+      });
+  };
+  const handlePaidCancel = () => {
+    setpaidOpen(!paidOpen);
+  };
+  const handlePaidConfirm = () => {
+    let obj = {};
+    setsubmitting(true);
+    obj.accessToken = localStorage.getItem("accessToken");
+    fetch("https://attendance-auth.herokuapp.com/verifyaccess", {
+      method: "POST",
+      body: JSON.stringify(obj),
+      headers: {
+        "Content-type": "application/json; charset=UTF-8",
+      },
+    })
+      .then((response) => {
+        if (response.status >= 200 && response.status <= 299) {
+          return response.json();
+        } else {
+          return response.text().then((text) => {
+            throw new Error(text);
+          });
+        }
+      })
+      .then((datarec) => {
+        if (datarec.accessToken) {
+          localStorage.setItem("accessToken", datarec.accessToken);
+          let obj = {
+            userid: datarec.userid,
+            id: router.query.id,
+          };
+          fetch("http://localhost:2222/paid", {
+            method: "POST",
+            body: JSON.stringify(obj),
+            headers: {
+              "Content-type": "application/json; charset=UTF-8",
+            },
+          })
+            .then((response) => {
+              if (response.status >= 200 && response.status <= 299) {
+                return response.json();
+              } else {
+                return response.text().then((text) => {
+                  throw new Error(text);
+                });
+              }
+            })
+            .then((val) => {
+              val.data.forEach((element) => {
+                if (element.id == router.query.id) {
+                  setData(element.attendance);
+                  setsal(element.salary);
+                  setname(element.name);
+                  setsubmitting(false);
+                  setpaidOpen(false);
                 }
               });
             })
@@ -348,7 +436,7 @@ export default function Slug() {
               </Table.Row>
             </Table.Header>
             <Table.Body>
-              {data.length > 0 && !submitting ? (
+              {(data.length > 0 || !updating )&& !submitting ? (
                 data.map((val, index) => (
                   <Table.Row key={index}>
                     <Table.Cell>
@@ -399,134 +487,163 @@ export default function Slug() {
                 </>
               )}
             </Table.Body>
-            {/* <Table.Footer fullWidth>
-            <Table.Row>
-              <Table.HeaderCell />
-            </Table.Row>
-          </Table.Footer> */}
+            <Table.Footer fullWidth>
+              <Table.Row>
+                <Table.HeaderCell colSpan="4">
+                  <Button
+                    floated="right"
+                    icon
+                    labelPosition="left"
+                    secondary
+                    size="small"
+                    onClick={() => setpaidOpen(!paidOpen)}
+                    disabled={data.length>0?false:true}
+                  >
+                    <Icon name="payment" /> Paid
+                  </Button>
+                </Table.HeaderCell>
+              </Table.Row>
+            </Table.Footer>
           </Table>
         </div>
       </div>
       {
-        <Modal
-          size="mini"
-          open={open}
-          onClose={() => setOpen(false)}
-          onOpen={() => setOpen(true)}
-        >
-          <Modal.Header>{currentDate}</Modal.Header>
-          <Modal.Content scrolling>
-            <Button
-              content="Actions-"
-              style={{ marginBottom: "10px", height: "40px" }}
-              label={{
-                basic: true,
-                content: (
-                  <div className="ui small buttons">
-                    <Button
-                      color="green"
-                      basic={
-                        data.find(
-                          (value) =>
-                            value.date == currentDate && value.status == "p"
-                        ) == undefined
-                          ? true
-                          : false
-                      }
-                      onClick={(e) => handleAction("status", "p")}
+        <>
+          <Modal
+            size="mini"
+            open={open}
+            onClose={() => setOpen(false)}
+            onOpen={() => setOpen(true)}
+          >
+            <Modal.Header>{currentDate}</Modal.Header>
+            <Modal.Content scrolling>
+              <Button
+                content="Actions-"
+                style={{ marginBottom: "10px", height: "40px" }}
+                label={{
+                  basic: true,
+                  content: (
+                    <div className="ui small buttons">
+                      <Button
+                        color="green"
+                        basic={
+                          data.find(
+                            (value) =>
+                              value.date == currentDate && value.status == "p"
+                          ) == undefined
+                            ? true
+                            : false
+                        }
+                        onClick={(e) => handleAction("status", "p")}
+                      >
+                        P
+                      </Button>
+                      <div className="or"></div>
+                      <Button
+                        color="red"
+                        basic={
+                          data.find(
+                            (value) =>
+                              value.date == currentDate && value.status == "a"
+                          ) == undefined
+                            ? true
+                            : false
+                        }
+                        onClick={(e) => handleAction("status", "a")}
+                      >
+                        A
+                      </Button>
+                    </div>
+                  ),
+                }}
+                labelPosition="right"
+              />
+              <Button
+                content="Advance"
+                style={{ marginBottom: "10px", height: "40px" }}
+                label={{
+                  basic: true,
+                  content: (
+                    <div
+                      className={`ui labeled input ${styles.advance}`}
+                      style={{ marginRight: "2rem" }}
                     >
-                      P
-                    </Button>
-                    <div className="or"></div>
-                    <Button
-                      color="red"
-                      basic={
-                        data.find(
-                          (value) =>
-                            value.date == currentDate && value.status == "a"
-                        ) == undefined
-                          ? true
-                          : false
-                      }
-                      onClick={(e) => handleAction("status", "a")}
-                    >
-                      A
-                    </Button>
-                  </div>
-                ),
-              }}
-              labelPosition="right"
-            />
-            <Button
-              content="Advance"
-              style={{ marginBottom: "10px", height: "40px" }}
-              label={{
-                basic: true,
-                content: (
-                  <div
-                    className={`ui labeled input ${styles.advance}`}
-                    style={{ marginRight: "2rem" }}
-                  >
-                    <div className="ui basic label">₹</div>
-                    <input
-                      type="number"
-                      value={
-                        data.find(
-                          (val) => val.date == currentDate && val.advance > 0
-                        ) == undefined
-                          ? ""
-                          : data.find(
-                              (value) =>
-                                value.date == currentDate && value.advance > 0
-                            ).advance
-                      }
-                      placeholder="Amount"
-                      onChange={(e) => handleAction("advance", e.target.value)}
-                    />
-                  </div>
-                ),
-              }}
-              labelPosition="right"
-            />
-            <Button
-              content="Remarks"
-              style={{ height: "40px" }}
-              label={{
-                basic: true,
-                content: (
-                  <form className="ui form">
-                    <textarea
-                      placeholder="Remarks..."
-                      rows="1"
-                      className={styles.remarks}
-                      value={
-                        data.find(
-                          (val) => val.date == currentDate && val.remarks
-                        ) == undefined
-                          ? ""
-                          : data.find(
-                              (value) =>
-                                value.date == currentDate &&
-                                value.remarks.length > 0
-                            ).remarks
-                      }
-                      onChange={(e) => handleAction("remarks", e.target.value)}
-                    ></textarea>
-                  </form>
-                ),
-              }}
-              labelPosition="right"
-            />
-          </Modal.Content>
-          <Modal.Actions>
-            <Button color="red" onClick={handleCancel} disabled={submitting}>
-              <Icon name="remove" /> Cancel
-            </Button>
-            <Button color="green" onClick={handleUpdate} disabled={submitting}>
-              <Icon name="checkmark" /> Update
-            </Button>
-          </Modal.Actions>
-        </Modal>
+                      <div className="ui basic label">₹</div>
+                      <input
+                        type="number"
+                        value={
+                          data.find(
+                            (val) => val.date == currentDate && val.advance > 0
+                          ) == undefined
+                            ? ""
+                            : data.find(
+                                (value) =>
+                                  value.date == currentDate && value.advance > 0
+                              ).advance
+                        }
+                        placeholder="Amount"
+                        onChange={(e) =>
+                          handleAction("advance", e.target.value)
+                        }
+                      />
+                    </div>
+                  ),
+                }}
+                labelPosition="right"
+              />
+              <Button
+                content="Remarks"
+                style={{ height: "40px" }}
+                label={{
+                  basic: true,
+                  content: (
+                    <form className="ui form">
+                      <textarea
+                        placeholder="Remarks..."
+                        rows="1"
+                        className={styles.remarks}
+                        value={
+                          data.find(
+                            (val) => val.date == currentDate && val.remarks
+                          ) == undefined
+                            ? ""
+                            : data.find(
+                                (value) =>
+                                  value.date == currentDate &&
+                                  value.remarks.length > 0
+                              ).remarks
+                        }
+                        onChange={(e) =>
+                          handleAction("remarks", e.target.value)
+                        }
+                      ></textarea>
+                    </form>
+                  ),
+                }}
+                labelPosition="right"
+              />
+            </Modal.Content>
+            <Modal.Actions>
+              <Button color="red" onClick={handleCancel} disabled={submitting}>
+                <Icon name="remove" /> Cancel
+              </Button>
+              <Button
+                color="green"
+                onClick={handleUpdate}
+                disabled={submitting}
+              >
+                <Icon name="checkmark" /> Update
+              </Button>
+            </Modal.Actions>
+          </Modal>
+          <Confirm
+            header="This will reset and start attendance from tomorrow."
+            open={paidOpen}
+            onCancel={handlePaidCancel}
+            onConfirm={handlePaidConfirm}
+            size="mini"
+          />
+        </>
       }
     </>
   );
