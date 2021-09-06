@@ -85,7 +85,7 @@ export default function Login() {
       let obj = {};
       obj.email = email;
       obj.password = password;
-      fetch("http://localhost:1111/login", {
+      fetch("https://attendance-auth.herokuapp.com/login", {
         method: "POST",
         body: JSON.stringify(obj),
         headers: {
@@ -126,7 +126,7 @@ export default function Login() {
       obj.email = email;
       obj.password = password;
       obj.confirmPassword = confirmpassword;
-      fetch("http://localhost:1111/register", {
+      fetch("https://attendance-auth.herokuapp.com/register", {
         method: "POST",
         body: JSON.stringify(obj),
         headers: {
@@ -193,7 +193,7 @@ export default function Login() {
       setverifying(true);
       obj.otp = otp;
       obj.sessionId = localStorage.getItem("x-auth-token");
-      fetch("http://localhost:1111/verifyotp", {
+      fetch("https://attendance-auth.herokuapp.com/verifyotp", {
         method: "POST",
         body: JSON.stringify(obj),
         headers: {
