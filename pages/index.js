@@ -319,7 +319,6 @@ export default function Home() {
     }
   };
   const handleAction = (key, val, id) => {
-    console.log(totalChanges);
     data.forEach((value) => {
       if (value.id == id) {
         if (value.attendance.length)
@@ -343,7 +342,6 @@ export default function Home() {
     });
   };
   useEffect(() => {
-    console.log(totalChanges, data, dummy);
     totalChanges = Number(localStorage.getItem("updateChange"));
     if (totalChanges == undefined) totalChanges = 0;
     if (data.length > 0) {
@@ -380,7 +378,6 @@ export default function Home() {
       });
     }
     setupdateChange(totalChanges);
-    console.log(totalChanges);
   }, [dataset, dummy]);
 
   useEffect(() => {
@@ -392,21 +389,16 @@ export default function Home() {
     if (searchContent) {
       datas.forEach((val) => {
         if (searchDrowndown == "Name") {
-          console.log(val);
           if (val.name.toLowerCase().includes(searchContent)) dumm.push(val);
         }
       });
-      console.log(dumm, dumm.length);
       settotalPage(Math.ceil(dumm.length / 5));
       for (let i = min; i < dumm.length; i++) {
-        console.log(dumm[i]);
         if (i < max) dum.push(dumm[i]);
       }
-      console.log(dum);
       localStorage.setItem("updateChange", 0);
     } else {
       for (let i = min; i < datas.length; i++) {
-        console.log("hello");
         if (i < max) dum.push(datas[i]);
       }
     }
@@ -593,7 +585,6 @@ export default function Home() {
       });
   };
   const handlePageChange = (e, data) => {
-    console.log(data);
     setactivePage(data.activePage);
   };
   const handleSearchDropdown = (e) => {
@@ -673,12 +664,18 @@ export default function Home() {
                   data.map((val, index) => (
                     <Table.Row
                       key={index}
-                      active={
+                      className={
                         new Date(val.startDate).getTime() <=
                         new Date(startDate).getTime()
-                          ? false
-                          : true
+                          ? null
+                          : styles.colorRow
                       }
+                      // active={
+                      //   new Date(val.startDate).getTime() <=
+                      //   new Date(startDate).getTime()
+                      //     ? false
+                      //     : true
+                      // }
                       disabled={
                         new Date(val.startDate).getTime() <=
                         new Date(startDate).getTime()

@@ -30,7 +30,6 @@ export default function Slug() {
   const [open, setOpen] = useState(false);
   const [paidOpen, setpaidOpen] = useState(false);
   const [currentDate, setcurrentDate] = useState("");
-  console.log(router.query.id);
   useEffect(() => {
     setLogin(localStorage.getItem("accessToken") != undefined ? true : false);
     if (localStorage.getItem("accessToken") == undefined) {
@@ -197,9 +196,6 @@ export default function Slug() {
     });
     setData([...data]);
   };
-  useEffect(() => {
-    console.log(data);
-  }, [data]);
   const handleUpdate = () => {
     let obj = {};
     obj.accessToken = localStorage.getItem("accessToken");
