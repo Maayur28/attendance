@@ -80,12 +80,16 @@ export default function Login() {
   };
   const handleLoginRequest = () => {
     if (!validLoginForm) {
+      setloginErrorMessage("");
+      setsignupErrorMessage("");
+      setotp();
       setSubmitting(true);
       setvalidLoginForm(true);
       let obj = {};
       obj.email = email;
       obj.password = password;
       fetch("https://attendance-auth.herokuapp.com/login", {
+        // fetch("http://localhost:1111/login", {
         method: "POST",
         body: JSON.stringify(obj),
         headers: {
@@ -107,10 +111,11 @@ export default function Login() {
           router.replace("/");
         })
         .catch((err) => {
-          if(err.message.includes('You are not registered'))
-          setloginErrorMessage("Please login with a registered email address");
-          else
-          setloginErrorMessage(err.message);
+          if (err.message.includes("You are not registered"))
+            setloginErrorMessage(
+              "Please login with a registered email address"
+            );
+          else setloginErrorMessage(err.message);
           console.log(err.message);
           setSubmitting(false);
           setvalidLoginForm(false);
@@ -119,6 +124,9 @@ export default function Login() {
   };
   const handleSignupRequest = () => {
     if (!validSignupForm) {
+      setloginErrorMessage("");
+      setsignupErrorMessage("");
+      setotp();
       setSubmitting(true);
       setvalidSignupForm(true);
       let obj = {};
@@ -127,6 +135,7 @@ export default function Login() {
       obj.password = password;
       obj.confirmPassword = confirmpassword;
       fetch("https://attendance-auth.herokuapp.com/register", {
+        // fetch("http://localhost:1111/register", {
         method: "POST",
         body: JSON.stringify(obj),
         headers: {
@@ -144,16 +153,10 @@ export default function Login() {
         })
         .then((datarec) => {
           localStorage.setItem("x-auth-token", datarec.authToken);
-          if (datarec.refreshToken) {
-            setsignupSuccess(true);
-            setsignupSuccessMessage(
-              "Otp has been sent to your registered email address. Valid for 5 min."
-            );
-          }
-          // setname("");
-          // setemail("");
-          // setpassword("");
-          // setconfirmpassword("");
+          setsignupSuccess(true);
+          setsignupSuccessMessage(
+            "Otp has been sent to your registered email address. Valid for 5 min."
+          );
           setSubmitting(false);
         })
         .catch((err) => {
@@ -189,6 +192,8 @@ export default function Login() {
   };
   const handleVerifyOtpRequest = () => {
     if (otp.toString().length > 5) {
+      setloginErrorMessage("");
+      setsignupErrorMessage("");
       let obj = {};
       setverifying(true);
       obj.otp = otp;
@@ -210,16 +215,20 @@ export default function Login() {
           }
         })
         .then((datarec) => {
-          if (datarec.sessonId) {
+          if (datarec.accessToken) {
             localStorage.removeItem("x-auth-token");
-            localStorage.setItem("accessToken", datarec.cipherToken);
+            localStorage.setItem("accessToken", datarec.accessToken);
             router.replace("/");
           } else setotpErrorMessage("Please enter correct otp.");
           setverifying(false);
         })
         .catch((err) => {
           setsignupSuccess(false);
-          if (err.message.includes("jwt expired") || err.message.includes("jwt malformed")) {
+          setotp();
+          if (
+            err.message.includes("jwt expired") ||
+            err.message.includes("jwt malformed")
+          ) {
             setotpErrorMessage("Otp has been expired! Signup again.");
             localStorage.removeItem("x-auth-token");
           } else setotpErrorMessage(err.message);
@@ -342,7 +351,7 @@ export default function Login() {
                           color="black"
                           disabled={
                             otp
-                              ? otp.toString().length < 5
+                              ? otp.toString().length <= 5
                                 ? true
                                 : false
                               : true

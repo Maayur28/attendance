@@ -31,6 +31,7 @@ export default function Home() {
   const [calAlign, setcalAlign] = useState("40vw");
   const [searched, setsearched] = useState(false);
   const [searchContent, setsearchContent] = useState("");
+  const [receivedData, setreceviedData] = useState(true);
   let totalChanges = 0;
   const [dataset, setdataset] = useState(false);
   const [login, setLogin] = useState(false);
@@ -135,6 +136,7 @@ export default function Home() {
       localStorage.setItem("updateChange", 0);
       let obj = {};
       setsubmitting(true);
+      setreceviedData(false);
       obj.accessToken = localStorage.getItem("accessToken");
       fetch("https://attendance-auth.herokuapp.com/verifyaccess", {
         method: "POST",
@@ -188,15 +190,18 @@ export default function Home() {
                   .then((val) => {
                     setDummy(val.data);
                     setsubmitting(false);
+                    setreceviedData(true);
                   })
                   .catch((err) => {
                     console.log(err.message);
                     setsubmitting(false);
+                    setreceviedData(true);
                   });
               })
               .catch((err) => {
                 console.log(err.message);
                 setsubmitting(false);
+                setreceviedData(true);
               });
           } else {
             localStorage.removeItem("accessToken");
@@ -205,6 +210,8 @@ export default function Home() {
         })
         .catch((err) => {
           setsubmitting(false);
+          setreceviedData(true);
+          setreceviedData(true);
           if (
             err.message.includes("jwt expired") ||
             err.message.includes("jwt malformed")
@@ -295,10 +302,12 @@ export default function Home() {
                   setsalary();
                   setdate("");
                   setsubmitting(false);
+                  setreceviedData(true);
                 })
                 .catch((err) => {
                   console.log(err.message);
                   setsubmitting(false);
+                  setreceviedData(true);
                 });
             } else {
               localStorage.removeItem("accessToken");
@@ -307,6 +316,7 @@ export default function Home() {
           })
           .catch((err) => {
             setsubmitting(false);
+            setreceviedData(true);
             if (
               err.message.includes("jwt expired") ||
               err.message.includes("jwt malformed")
@@ -464,15 +474,18 @@ export default function Home() {
                 .then((val) => {
                   setDummy(val.data);
                   setsubmitting(false);
+                  setreceviedData(true);
                 })
                 .catch((err) => {
                   console.log(err.message);
                   setsubmitting(false);
+                  setreceviedData(true);
                 });
             })
             .catch((err) => {
               console.log(err.message);
               setsubmitting(false);
+              setreceviedData(true);
             });
         } else {
           localStorage.removeItem("accessToken");
@@ -481,6 +494,7 @@ export default function Home() {
       })
       .catch((err) => {
         setsubmitting(false);
+        setreceviedData(true);
         if (
           err.message.includes("jwt expired") ||
           err.message.includes("jwt malformed")
@@ -558,15 +572,18 @@ export default function Home() {
                   totalChanges = 0;
                   localStorage.setItem("updateChange", 0);
                   setsubmitting(false);
+                  setreceviedData(true);
                 })
                 .catch((err) => {
                   console.log(err.message);
                   setsubmitting(false);
+                  setreceviedData(true);
                 });
             })
             .catch((err) => {
               console.log(err.message);
               setsubmitting(false);
+              setreceviedData(true);
             });
         } else {
           localStorage.removeItem("accessToken");
@@ -575,6 +592,7 @@ export default function Home() {
       })
       .catch((err) => {
         setsubmitting(false);
+        setreceviedData(true);
         if (
           err.message.includes("jwt expired") ||
           err.message.includes("jwt malformed")
@@ -660,7 +678,7 @@ export default function Home() {
                 </Table.Row>
               </Table.Header>
               <Table.Body>
-                {(data.length > 0 || searchContent) && !submitting ? (
+                {(data.length > 0 || searchContent || receivedData) && !submitting ? (
                   data.map((val, index) => (
                     <Table.Row
                       key={index}
@@ -670,12 +688,6 @@ export default function Home() {
                           ? null
                           : styles.colorRow
                       }
-                      // active={
-                      //   new Date(val.startDate).getTime() <=
-                      //   new Date(startDate).getTime()
-                      //     ? false
-                      //     : true
-                      // }
                       disabled={
                         new Date(val.startDate).getTime() <=
                         new Date(startDate).getTime()
