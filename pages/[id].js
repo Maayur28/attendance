@@ -62,7 +62,7 @@ export default function Slug() {
         .then((datarec) => {
           if (datarec.accessToken) {
             localStorage.setItem("accessToken", datarec.accessToken);
-            fetch("http://localhost:2222/getAttendance", {
+            fetch("https://attendance-attend.herokuapp.com/getAttendance", {
               headers: {
                 userid: datarec.userid,
               },
@@ -127,11 +127,11 @@ export default function Slug() {
     return (
       <div className={styles.expanded}>
         <div className={styles.headProf}>
-          <Header as="h2"  style={{margin:'0'}}>
+          <Header as="h2" style={{ margin: "0" }}>
             <Icon name="user secret" />
             {name}
           </Header>
-          <Header as="h2" style={{margin:'0',paddingLeft:'10px'}}>
+          <Header as="h2" style={{ margin: "0", paddingLeft: "10px" }}>
             <Icon name="clock" />
             {startDa}
           </Header>
@@ -232,7 +232,7 @@ export default function Slug() {
             id: router.query.id,
             data: data,
           };
-          fetch("http://localhost:2222/updateempid", {
+          fetch("https://attendance-attend.herokuapp.com/updateempid", {
             method: "POST",
             body: JSON.stringify(obj),
             headers: {
@@ -303,7 +303,7 @@ export default function Slug() {
       .then((datarec) => {
         if (datarec.accessToken) {
           localStorage.setItem("accessToken", datarec.accessToken);
-          fetch("http://localhost:2222/getAttendance", {
+          fetch("https://attendance-attend.herokuapp.com/getAttendance", {
             headers: {
               userid: datarec.userid,
             },
@@ -379,7 +379,7 @@ export default function Slug() {
             userid: datarec.userid,
             id: router.query.id,
           };
-          fetch("http://localhost:2222/paid", {
+          fetch("https://attendance-attend.herokuapp.com/paid", {
             method: "POST",
             body: JSON.stringify(obj),
             headers: {

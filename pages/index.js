@@ -157,7 +157,7 @@ export default function Home() {
         .then((datarec) => {
           if (datarec.accessToken) {
             localStorage.setItem("accessToken", datarec.accessToken);
-            fetch("http://localhost:2222/getAttendance", {
+            fetch("https://attendance-attend.herokuapp.com/getAttendance", {
               headers: {
                 userid: datarec.userid,
               },
@@ -173,7 +173,7 @@ export default function Home() {
               })
               .then((val) => {
                 setDatas(val.data);
-                fetch("http://localhost:2222/getAttendance", {
+                fetch("https://attendance-attend.herokuapp.com/getAttendance", {
                   headers: {
                     userid: datarec.userid,
                   },
@@ -279,7 +279,7 @@ export default function Home() {
                   attendance: {},
                 },
               };
-              fetch("http://localhost:2222/addemp", {
+              fetch("https://attendance-attend.herokuapp.com/addemp", {
                 method: "POST",
                 body: JSON.stringify(obj),
                 headers: {
@@ -441,7 +441,7 @@ export default function Home() {
       .then((datarec) => {
         if (datarec.accessToken) {
           localStorage.setItem("accessToken", datarec.accessToken);
-          fetch("http://localhost:2222/getAttendance", {
+          fetch("https://attendance-attend.herokuapp.com/getAttendance", {
             headers: {
               userid: datarec.userid,
             },
@@ -457,7 +457,7 @@ export default function Home() {
             })
             .then((val) => {
               setDatas(val.data);
-              fetch("http://localhost:2222/getAttendance", {
+              fetch("https://attendance-attend.herokuapp.com/getAttendance", {
                 headers: {
                   userid: datarec.userid,
                 },
@@ -531,7 +531,7 @@ export default function Home() {
             userid: datarec.userid,
             data: data,
           };
-          fetch("http://localhost:2222/updateemp", {
+          fetch("https://attendance-attend.herokuapp.com/updateemp", {
             method: "POST",
             body: JSON.stringify(obj),
             headers: {
@@ -552,7 +552,7 @@ export default function Home() {
               setupdateChange(0);
               totalChanges = 0;
               localStorage.setItem("updateChange", 0);
-              fetch("http://localhost:2222/getAttendance", {
+              fetch("https://attendance-attend.herokuapp.com/getAttendance", {
                 headers: {
                   userid: datarec.userid,
                 },
@@ -678,7 +678,8 @@ export default function Home() {
                 </Table.Row>
               </Table.Header>
               <Table.Body>
-                {(data.length > 0 || searchContent || receivedData) && !submitting ? (
+                {(data.length > 0 || searchContent || receivedData) &&
+                !submitting ? (
                   data.map((val, index) => (
                     <Table.Row
                       key={index}
