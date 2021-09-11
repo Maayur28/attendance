@@ -1,4 +1,4 @@
 User-Agent: *
 Disallow: 
 
-Sitemap: https://attendance-maayur28.vercel.app/login/sitemap.xml
+Sitemap: https://attendance-maayur28.vercel.app/sitemap.xml
