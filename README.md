@@ -27,7 +27,6 @@
         <li><a href="#run-the-development-server">Run the development server</a></li>
       </ul>
     </li>
-      <li><a href="#google-lighthouse-score">Google Lighthouse Score</a></li>
     <li><a href="#contact">Contact</a></li>
   </ol>
 </details>
@@ -78,10 +77,6 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 You can start editing the page by modifying `pages/index.js`. The page auto-updates as you edit the file.
 
-## Google Lighthouse Score
-
-![lightHouseScore](https://res.cloudinary.com/mayur28/image/upload/v1627742370/latestLighthouseReport_ju0nbi.png)
-Last updated on- 31-July-2021 at 20:03:03
 ## Contact
 
 Connect with me - [drop message](https://www.mayuragarwal.in/#contact)
