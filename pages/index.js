@@ -53,6 +53,12 @@ export default function Home() {
   const screenWidth = useWindowDimensions();
   const options = [
     {
+      key: "all",
+      text: "All",
+      value: "all",
+      content: "All",
+    },
+    {
       key: "name",
       text: "Name",
       value: "name",
@@ -69,12 +75,6 @@ export default function Home() {
       text: "Advance",
       value: "advance",
       content: "Advance",
-    },
-    {
-      key: "remarks",
-      text: "Remarks",
-      value: "remarks",
-      content: "Remarks",
     },
   ];
   const [searchDrowndown, setsearchDrowndown] = useState(options[0].content);
@@ -399,7 +399,46 @@ export default function Home() {
     if (searchContent) {
       datas.forEach((val) => {
         if (searchDrowndown == "Name") {
-          if (val.name.toLowerCase().includes(searchContent)) dumm.push(val);
+          val.attendance.forEach((value) => {
+            if (value.date == startDate.toISOString().slice(0, 10)) {
+              if (val.name.toLowerCase().includes(searchContent))
+                dumm.push(val);
+            }
+          });
+        }
+        if (searchDrowndown == "All") {
+          val.attendance.forEach((value) => {
+            if (value.date == startDate.toISOString().slice(0, 10)) {
+              if (val.name.toLowerCase().includes(searchContent))
+                dumm.push(val);
+              if (value.status == "p") {
+                if ("present".includes(searchContent)) dumm.push(val);
+              }
+              if (value.status == "a") {
+                if ("absent".includes(searchContent)) dumm.push(val);
+              }
+              if (value.advance >= Number(searchContent)) dumm.push(val);
+            }
+          });
+        }
+        if (searchDrowndown == "Action") {
+          val.attendance.forEach((value) => {
+            if (value.date == startDate.toISOString().slice(0, 10)) {
+              if (value.status == "p") {
+                if ("present".includes(searchContent)) dumm.push(val);
+              }
+              if (value.status == "a") {
+                if ("absent".includes(searchContent)) dumm.push(val);
+              }
+            }
+          });
+        }
+        if (searchDrowndown == "Advance") {
+          val.attendance.forEach((value) => {
+            if (value.date == startDate.toISOString().slice(0, 10)) {
+              if (value.advance >= Number(searchContent)) dumm.push(val);
+            }
+          });
         }
       });
       settotalPage(Math.ceil(dumm.length / 5));
@@ -606,10 +645,11 @@ export default function Home() {
     setactivePage(data.activePage);
   };
   const handleSearchDropdown = (e) => {
+    setsearchContent("");
     setsearchDrowndown(e.target.textContent);
   };
   const searchValue = (e) => {
-    setsearchContent(e.target.value);
+    setsearchContent(e.target.value.toLowerCase());
     setactivePage(1);
   };
   return (

@@ -71,9 +71,9 @@ a {
 }
 @media screen and (max-width:400px) {
   .btn-search:focus ~ .input-search{
-    width: 120px;
+    width: 100px;
   }
   .input-search:focus{
-    width: 120px;
+    width: 100px;
   }
 }
