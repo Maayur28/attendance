@@ -116,7 +116,7 @@ export default function Login() {
               "Please login with a registered email address"
             );
           else setloginErrorMessage(err.message);
-          console.log(err.message);
+
           setSubmitting(false);
           setvalidLoginForm(false);
         });
@@ -160,7 +160,6 @@ export default function Login() {
           setSubmitting(false);
         })
         .catch((err) => {
-          console.log(err.message);
           if (err.message.includes("User has been already registered"))
             setsignupErrorMessage(
               "Already registered! Please login to continue."
@@ -232,7 +231,6 @@ export default function Login() {
             setotpErrorMessage("Otp has been expired! Signup again.");
             localStorage.removeItem("x-auth-token");
           } else setotpErrorMessage(err.message);
-          console.log(err.message);
           setverifying(false);
         });
     }
@@ -248,7 +246,7 @@ export default function Login() {
         <div className={styles.loginPageContainer}>
           <div className={styles.loginLeft}>
             <img
-              src="/ams.jpg"
+              src="/ams.webp"
               alt="LoginImage"
               className={styles.loginImage}
             />

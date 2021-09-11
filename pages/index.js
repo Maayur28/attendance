@@ -193,13 +193,11 @@ export default function Home() {
                     setreceviedData(true);
                   })
                   .catch((err) => {
-                    console.log(err.message);
                     setsubmitting(false);
                     setreceviedData(true);
                   });
               })
               .catch((err) => {
-                console.log(err.message);
                 setsubmitting(false);
                 setreceviedData(true);
               });
@@ -305,7 +303,6 @@ export default function Home() {
                   setreceviedData(true);
                 })
                 .catch((err) => {
-                  console.log(err.message);
                   setsubmitting(false);
                   setreceviedData(true);
                 });
@@ -516,13 +513,11 @@ export default function Home() {
                   setreceviedData(true);
                 })
                 .catch((err) => {
-                  console.log(err.message);
                   setsubmitting(false);
                   setreceviedData(true);
                 });
             })
             .catch((err) => {
-              console.log(err.message);
               setsubmitting(false);
               setreceviedData(true);
             });
@@ -614,13 +609,11 @@ export default function Home() {
                   setreceviedData(true);
                 })
                 .catch((err) => {
-                  console.log(err.message);
                   setsubmitting(false);
                   setreceviedData(true);
                 });
             })
             .catch((err) => {
-              console.log(err.message);
               setsubmitting(false);
               setreceviedData(true);
             });
