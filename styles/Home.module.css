@@ -68,8 +68,9 @@
 }
 .notMarked {
   display: flex;
-  width: 100w;
+  width: 95vw;
   justify-content: center;
+  flex-wrap: wrap;
 }
 .viewDetail {
   color: chocolate;
@@ -136,7 +137,7 @@
 .colorRow {
   cursor: not-allowed !important;
 }
-.headProf{
+.headProf {
   width: 100vw;
   display: flex;
   justify-content: center;
