@@ -722,7 +722,7 @@ export default function Home() {
                           ? null
                           : styles.colorRow
                       }
-                      disabled={
+                      hidden={
                         new Date(val.startDate).getTime() <=
                         new Date(startDate).getTime()
                           ? false
