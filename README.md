@@ -27,6 +27,7 @@
         <li><a href="#run-the-development-server">Run the development server</a></li>
       </ul>
     </li>
+    <li><a href="#project-overview">Project Overview</a></li>
     <li><a href="#contact">Contact</a></li>
   </ol>
 </details>
@@ -39,6 +40,9 @@ As you have already know from my [portfolio](https://www.mayuragarwal.in/) that 
 
 - Must provide clean and easy-to-use experience.
 - Must provide better responsiveness for all screen sizes.
+- Many attractive and helpful features.
+- Field based search support.
+- Easy view and mark the attendance for the missing day.
 
 ### Built With
 
@@ -77,6 +81,12 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 You can start editing the page by modifying `pages/index.js`. The page auto-updates as you edit the file.
 
+## Project Overview
+
+![Register](https://res.cloudinary.com/mayur28/image/upload/v1638015879/ams1_ekjz4y.png)
+![HomePage](https://res.cloudinary.com/mayur28/image/upload/v1638015878/ams2_ftic6y.png)
+![Add Employee](https://res.cloudinary.com/mayur28/image/upload/v1638015878/ams3_lzeizr.png)
+![Edit/View Details](https://res.cloudinary.com/mayur28/image/upload/v1638015878/ams4_yanfbo.png)
 ## Contact
 
 Connect with me - [drop message](https://www.mayuragarwal.in/#contact)
