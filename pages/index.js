@@ -138,7 +138,7 @@ export default function Home() {
       setsubmitting(true);
       setreceviedData(false);
       obj.accessToken = localStorage.getItem("accessToken");
-      fetch("https://attendance-auth.herokuapp.com/verifyaccess", {
+      fetch("https://attendance-auth.vercel.app/verifyaccess", {
         method: "POST",
         body: JSON.stringify(obj),
         headers: {
@@ -245,7 +245,7 @@ export default function Home() {
         let obj = {};
         setsubmitting(true);
         obj.accessToken = localStorage.getItem("accessToken");
-        fetch("https://attendance-auth.herokuapp.com/verifyaccess", {
+        fetch("https://attendance-auth.vercel.app/verifyaccess", {
           method: "POST",
           body: JSON.stringify(obj),
           headers: {
@@ -458,7 +458,7 @@ export default function Home() {
     let obj = {};
     setsubmitting(true);
     obj.accessToken = localStorage.getItem("accessToken");
-    fetch("https://attendance-auth.herokuapp.com/verifyaccess", {
+    fetch("https://attendance-auth.vercel.app/verifyaccess", {
       method: "POST",
       body: JSON.stringify(obj),
       headers: {
@@ -542,7 +542,7 @@ export default function Home() {
     let obj = {};
     obj.accessToken = localStorage.getItem("accessToken");
     setsubmitting(true);
-    fetch("https://attendance-auth.herokuapp.com/verifyaccess", {
+    fetch("https://attendance-auth.vercel.app/verifyaccess", {
       method: "POST",
       body: JSON.stringify(obj),
       headers: {
