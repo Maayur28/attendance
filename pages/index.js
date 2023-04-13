@@ -157,7 +157,7 @@ export default function Home() {
         .then((datarec) => {
           if (datarec.accessToken) {
             localStorage.setItem("accessToken", datarec.accessToken);
-            fetch("https://attendance-attend.herokuapp.com/getAttendance", {
+            fetch("https://attendance-attend.vercel.app/getAttendance", {
               headers: {
                 userid: datarec.userid,
               },
@@ -173,7 +173,7 @@ export default function Home() {
               })
               .then((val) => {
                 setDatas(val.data);
-                fetch("https://attendance-attend.herokuapp.com/getAttendance", {
+                fetch("https://attendance-attend.vercel.app/getAttendance", {
                   headers: {
                     userid: datarec.userid,
                   },
@@ -277,7 +277,7 @@ export default function Home() {
                   attendance: {},
                 },
               };
-              fetch("https://attendance-attend.herokuapp.com/addemp", {
+              fetch("https://attendance-attend.vercel.app/addemp", {
                 method: "POST",
                 body: JSON.stringify(obj),
                 headers: {
@@ -477,7 +477,7 @@ export default function Home() {
       .then((datarec) => {
         if (datarec.accessToken) {
           localStorage.setItem("accessToken", datarec.accessToken);
-          fetch("https://attendance-attend.herokuapp.com/getAttendance", {
+          fetch("https://attendance-attend.vercel.app/getAttendance", {
             headers: {
               userid: datarec.userid,
             },
@@ -493,7 +493,7 @@ export default function Home() {
             })
             .then((val) => {
               setDatas(val.data);
-              fetch("https://attendance-attend.herokuapp.com/getAttendance", {
+              fetch("https://attendance-attend.vercel.app/getAttendance", {
                 headers: {
                   userid: datarec.userid,
                 },
@@ -565,7 +565,7 @@ export default function Home() {
             userid: datarec.userid,
             data: data,
           };
-          fetch("https://attendance-attend.herokuapp.com/updateemp", {
+          fetch("https://attendance-attend.vercel.app/updateemp", {
             method: "POST",
             body: JSON.stringify(obj),
             headers: {
@@ -586,7 +586,7 @@ export default function Home() {
               setupdateChange(0);
               totalChanges = 0;
               localStorage.setItem("updateChange", 0);
-              fetch("https://attendance-attend.herokuapp.com/getAttendance", {
+              fetch("https://attendance-attend.vercel.app/getAttendance", {
                 headers: {
                   userid: datarec.userid,
                 },

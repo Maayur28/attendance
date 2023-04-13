@@ -63,7 +63,7 @@ export default function Slug() {
         .then((datarec) => {
           if (datarec.accessToken) {
             localStorage.setItem("accessToken", datarec.accessToken);
-            fetch("https://attendance-attend.herokuapp.com/getAttendance", {
+            fetch("https://attendance-attend.vercel.app/getAttendance", {
               headers: {
                 userid: datarec.userid,
               },
@@ -233,7 +233,7 @@ export default function Slug() {
             id: router.query.id,
             data: data,
           };
-          fetch("https://attendance-attend.herokuapp.com/updateempid", {
+          fetch("https://attendance-attend.vercel.app/updateempid", {
             method: "POST",
             body: JSON.stringify(obj),
             headers: {
@@ -304,7 +304,7 @@ export default function Slug() {
       .then((datarec) => {
         if (datarec.accessToken) {
           localStorage.setItem("accessToken", datarec.accessToken);
-          fetch("https://attendance-attend.herokuapp.com/getAttendance", {
+          fetch("https://attendance-attend.vercel.app/getAttendance", {
             headers: {
               userid: datarec.userid,
             },
@@ -380,7 +380,7 @@ export default function Slug() {
             userid: datarec.userid,
             id: router.query.id,
           };
-          fetch("https://attendance-attend.herokuapp.com/paid", {
+          fetch("https://attendance-attend.vercel.app/paid", {
             method: "POST",
             body: JSON.stringify(obj),
             headers: {
